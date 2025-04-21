@@ -15,13 +15,14 @@ public class RedeemState extends PersistentState {
     private Map<String, RedeemManager.Redeem> codes = new HashMap<>();
 
     public RedeemState() {
-        // 呼叫 super() 即可
+        super(); // 使用預設 constructor
     }
 
     public static RedeemState fromNbt(NbtCompound nbt) {
         RedeemState state = new RedeemState();
         if (nbt.contains("data")) {
-            String json = nbt.getString("data");
+            // getString 返回 Optional<String>
+            String json = nbt.getString("data").orElse("");
             JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
             for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
                 RedeemManager.Redeem r = GSON.fromJson(e.getValue(), RedeemManager.Redeem.class);
@@ -31,7 +32,6 @@ public class RedeemState extends PersistentState {
         return state;
     }
 
-    @Override
     public NbtCompound writeNbt(NbtCompound nbt) {
         JsonObject obj = new JsonObject();
         for (Map.Entry<String, RedeemManager.Redeem> e : codes.entrySet()) {
