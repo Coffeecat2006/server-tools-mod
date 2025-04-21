@@ -30,7 +30,7 @@ tasks.withType(JavaCompile) {
 
 loom {
     runs {
-        named 'server' {
+        server {
             server()
             name = 'RedeemCode Server'
         }
