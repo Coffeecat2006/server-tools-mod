@@ -1,20 +1,24 @@
-package com.coffeecat2006;
+package com.coffeecat2006.redeem;
 
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.text.Style;
+import net.minecraft.text.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 
-import java.time.Instant;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 public class RedeemManager {
+    private static RedeemState state;
+    private static Map<String, Redeem> codes;
+
+    public static void init(RedeemState st) {
+        state = st;
+        codes = state.getCodes();
+    }
+
     public static class Redeem {
         public String code;
         public String message;
@@ -25,21 +29,7 @@ public class RedeemManager {
         public int redeemedCount;
         public Set<UUID> usedPlayers = new HashSet<>();
 
-        public Instant getExpiry() {
-            return Instant.ofEpochSecond(expiryEpoch);
-        }
-    }
-
-    private static RedeemState state;
-    private static Map<String, Redeem> codes;
-
-    public static void init(RedeemState st) {
-        state = st;
-        codes = state.getCodes();
-    }
-
-    private static void save() {
-        state.markDirty();
+        public Instant getExpiry() { return Instant.ofEpochSecond(expiryEpoch); }
     }
 
     public static int redeem(ServerCommandSource src, String code) {
@@ -77,48 +67,44 @@ public class RedeemManager {
 
         r.redeemedCount++;
         r.usedPlayers.add(player.getUuid());
-        save();
+        state.markDirty();
+
         src.sendFeedback(() -> Text.literal(r.message), false);
         return 1;
     }
 
     public static int list(ServerCommandSource src) {
         src.sendFeedback(() -> Text.literal("=== Redeem Codes ==="), false);
-
         for (Redeem r : codes.values()) {
             Duration left = Duration.between(Instant.now(), r.getExpiry());
             String remain = left.isNegative() ? "已過期" : left.toMinutes() + " 分鐘";
 
-            MutableText line = Text.literal(r.code)
-                .styled(style -> style
+            Text line = Text.literal(r.code)
+                .styled(Style.EMPTY
                     .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
-                    .withClickEvent(new ClickEvent.CopyToClipboard(r.code))
-                );
+                    .withClickEvent(new ClickEvent.CopyToClipboard(r.code)));
 
-            MutableText info = Text.literal(String.format(
-                " [%d/%s] 剩餘: %s 訊息: %s",
+            Text info = Text.literal(String.format(" [%d/%s] 剩餘: %s 訊息: %s",
                 r.redeemedCount,
                 r.limit < 0 ? "∞" : r.limit,
                 remain,
                 r.message
             ));
 
-            src.sendFeedback(() -> line.append(info), false);
+            src.sendFeedback(() -> ((MutableText) line).append(info), false);
 
             if (!r.items.isEmpty()) {
                 for (ItemStack item : r.items) {
                     String id = item.getItem().toString();
                     String cnt = String.valueOf(item.getCount());
-                    MutableText it = Text.literal("[" + cnt + "x" + id + "]")
-                        .styled(style -> style
+                    Text it = Text.literal("[" + cnt + "x" + id + "]")
+                        .styled(Style.EMPTY
                             .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊獲取此物品")))
-                            .withClickEvent(new ClickEvent.RunCommand("/give @s " + id + " 1"))
-                        );
+                            .withClickEvent(new ClickEvent.RunCommand("/give @s " + id + " 1")));
                     src.sendFeedback(() -> it, false);
                 }
             }
         }
-
         return 1;
     }
 
@@ -145,11 +131,11 @@ public class RedeemManager {
         }
 
         codes.put(r.code, r);
-        save();
+        state.markDirty();
 
-        MutableText ok = Text.literal("已建立: ")
+        Text ok = Text.literal("已建立: ")
             .append(Text.literal(r.code)
-                .styled(style -> style
+                .styled(Style.EMPTY
                     .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
                     .withClickEvent(new ClickEvent.CopyToClipboard(r.code))
                 )
@@ -161,7 +147,7 @@ public class RedeemManager {
 
     public static int remove(ServerCommandSource src, String code) {
         if (codes.remove(code) != null) {
-            save();
+            state.markDirty();
             src.sendFeedback(() -> Text.literal("已移除禮包碼: " + code), false);
         } else {
             src.sendFeedback(() -> Text.literal("找不到禮包碼: " + code), false);

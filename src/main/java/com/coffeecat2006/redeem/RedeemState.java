@@ -21,7 +21,7 @@ public class RedeemState extends PersistentState {
     public static RedeemState fromNbt(NbtCompound nbt) {
         RedeemState state = new RedeemState();
         if (nbt.contains("data")) {
-            // 處理 Optional<String>
+            // 解包 Optional<String>
             String json = nbt.getString("data").orElse("");
             JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
             for (Map.Entry<String, JsonElement> e : obj.entrySet()) {

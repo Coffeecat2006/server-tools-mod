@@ -1,4 +1,4 @@
-package com.coffeecat2006;
+package com.coffeecat2006.redeem;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.server.command.CommandManager;
