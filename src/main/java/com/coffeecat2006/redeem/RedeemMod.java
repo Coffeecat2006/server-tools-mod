@@ -8,7 +8,6 @@ import net.minecraft.server.world.ServerWorld;
 public class RedeemMod implements ModInitializer {
     @Override
     public void onInitialize() {
-
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             RedeemCommands.register(dispatcher);
         });
@@ -17,7 +16,7 @@ public class RedeemMod implements ModInitializer {
             if (!world.getRegistryKey().getValue().toString().endsWith("overworld")) return;
 
             RedeemState state = world.getPersistentStateManager()
-                .getOrCreate(RedeemState.TYPE, "redeemmod:redeem_codes");
+                .getOrCreate(RedeemState::new, "redeemmod_redeem_codes");
             RedeemManager.init(state);
         });
     }

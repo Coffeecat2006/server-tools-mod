@@ -1,7 +1,6 @@
 package com.coffeecat2006.redeem;
 
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.world.PersistentState;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -16,24 +15,24 @@ public class RedeemState extends PersistentState {
     private final Map<String, RedeemManager.Redeem> codes = new HashMap<>();
 
     public RedeemState() {
-        super();
+        // 使用無參建構子
     }
 
-    public static RedeemState fromNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
-        RedeemState state = new RedeemState();
-        if (nbt.contains("data")) {
+    @Override
+    public void readNbt(NbtCompound nbt) {
+        codes.clear();
+        if (nbt.contains("data", 8)) {  // 8 = TAG_STRING
             String json = nbt.getString("data");
             JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
             for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
                 RedeemManager.Redeem r = GSON.fromJson(e.getValue(), RedeemManager.Redeem.class);
-                state.codes.put(e.getKey(), r);
+                codes.put(e.getKey(), r);
             }
         }
-        return state;
     }
 
     @Override
-    public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
+    public NbtCompound writeNbt(NbtCompound nbt) {
         JsonObject obj = new JsonObject();
         for (Map.Entry<String, RedeemManager.Redeem> e : codes.entrySet()) {
             obj.add(e.getKey(), GSON.toJsonTree(e.getValue()));
@@ -45,7 +44,4 @@ public class RedeemState extends PersistentState {
     public Map<String, RedeemManager.Redeem> getCodes() {
         return codes;
     }
-
-    public static final Type<RedeemState> TYPE =
-        new Type<>(RedeemState::new, RedeemState::fromNbt, null);
 }
