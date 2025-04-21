@@ -1,41 +1,17 @@
 {
 	"schemaVersion": 1,
-	"id": "redeem-mod",
-	"version": "${version}",
-	"name": "Redeem Mod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
-	"authors": [
-		"Me!"
-	],
-	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
-	},
-	"license": "CC0-1.0",
-	"icon": "assets/redeem-mod/icon.png",
-	"environment": "*",
+	"id": "redeemmod",
+	"version": "1.0.1",
+	"name": "RedeemCode Mod",
+	"description": "伺服器端禮包碼系統，支援持久化存檔。",
+	"authors": ["YourName"],
+	"license": "MIT",
+	"environment": "server",
 	"entrypoints": {
-		"main": [
-			"com.coffeecat2006.RedeemMod"
-		],
-		"client": [
-			"com.coffeecat2006.RedeemModClient"
-		]
-	},
-	"mixins": [
-		"redeem-mod.mixins.json",
-		{
-			"config": "redeem-mod.client.mixins.json",
-			"environment": "client"
-		}
-	],
+	  "main": ["com.example.redeem.RedeemMod"]
+},
 	"depends": {
-		"fabricloader": ">=0.16.13",
-		"minecraft": "~1.21.5",
-		"java": ">=21",
-		"fabric-api": "*"
-	},
-	"suggests": {
-		"another-mod": "*"
+	  "fabricloader": ">=0.14.0",
+	  "fabric-api": "*"
 	}
-}
+  }
