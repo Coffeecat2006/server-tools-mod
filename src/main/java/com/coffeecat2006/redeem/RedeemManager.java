@@ -4,7 +4,6 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.Style;
 import net.minecraft.item.ItemStack;
@@ -25,7 +24,9 @@ public class RedeemManager {
         public int redeemedCount;
         public Set<UUID> usedPlayers = new HashSet<>();
 
-        public Instant getExpiry() { return Instant.ofEpochSecond(expiryEpoch); }
+        public Instant getExpiry() {
+            return Instant.ofEpochSecond(expiryEpoch);
+        }
     }
 
     private static RedeemState state;
@@ -48,6 +49,7 @@ public class RedeemManager {
             src.sendFeedback(() -> Text.literal("僅玩家可使用此指令"), false);
             return 0;
         }
+
         Redeem r = codes.get(code);
         if (r == null) {
             src.sendFeedback(() -> Text.literal("無此禮包碼: " + code), false);
@@ -65,11 +67,14 @@ public class RedeemManager {
             src.sendFeedback(() -> Text.literal("你已經領取過此禮包碼"), false);
             return 0;
         }
+
         for (ItemStack item : r.items) {
             ItemStack give = item.copy();
             give.setCount(item.getCount());
+            // 改用公開方法
             player.getInventory().offerOrDrop(give);
         }
+
         r.redeemedCount++;
         r.usedPlayers.add(player.getUuid());
         save();
@@ -79,32 +84,40 @@ public class RedeemManager {
 
     public static int list(ServerCommandSource src) {
         src.sendFeedback(() -> Text.literal("=== Redeem Codes ==="), false);
+
         codes.values().forEach(r -> {
             Duration left = Duration.between(Instant.now(), r.getExpiry());
             String remain = left.isNegative() ? "已過期" : left.toMinutes() + " 分鐘";
 
-            MutableText line = Text.literal(r.code)
+            // 建立可點擊、懸浮的 code 文字
+            Text line = Text.literal(r.code)
                 .styled(Style.EMPTY
-                    .withHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.literal("點擊複製")))
-                    .withClickEvent(ClickEvent.of(ClickEvent.Action.COPY_TO_CLIPBOARD, r.code)));
+                    .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
+                    .withClickEvent(new ClickEvent.CopyToClipboard(r.code)));
 
-            MutableText info = Text.literal(String.format(" [%d/%s] 剩餘: %s 訊息: %s",
-                r.redeemedCount, r.limit < 0 ? "∞" : r.limit, remain, r.message));
+            Text info = Text.literal(String.format(" [%d/%s] 剩餘: %s 訊息: %s",
+                r.redeemedCount,
+                r.limit < 0 ? "∞" : r.limit,
+                remain,
+                r.message
+            ));
 
             src.sendFeedback(() -> line.append(info), false);
 
+            // 顯示 item
             if (!r.items.isEmpty()) {
                 r.items.forEach(item -> {
                     String id = item.getItem().toString();
                     String cnt = String.valueOf(item.getCount());
-                    MutableText it = Text.literal("[" + cnt + "x" + id + "]")
+                    Text it = Text.literal("[" + cnt + "x" + id + "]")
                         .styled(Style.EMPTY
-                            .withHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.literal("點擊獲取此物品")))
-                            .withClickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND, "/give @s " + id + " 1")));
+                            .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊獲取此物品")))
+                            .withClickEvent(new ClickEvent.RunCommand("/give @s " + id + " 1")));
                     src.sendFeedback(() -> it, false);
                 });
             }
         });
+
         return 1;
     }
 
@@ -119,6 +132,7 @@ public class RedeemManager {
             ? Long.MAX_VALUE
             : Instant.now().plus(Duration.ofMinutes(Long.parseLong(timeStr))).getEpochSecond();
         r.singleUse = Boolean.parseBoolean(rulesStr);
+
         try {
             ServerPlayerEntity player = src.getPlayer();
             ItemStack off = player.getOffHandStack();
@@ -128,14 +142,15 @@ public class RedeemManager {
         } catch (Exception e) {
             r.items = new ArrayList<>();
         }
+
         codes.put(r.code, r);
         save();
 
-        MutableText ok = Text.literal("已建立: ")
+        Text ok = Text.literal("已建立: ")
             .append(Text.literal(r.code)
                 .styled(Style.EMPTY
-                    .withHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.literal("點擊複製")))
-                    .withClickEvent(ClickEvent.of(ClickEvent.Action.COPY_TO_CLIPBOARD, r.code))));
+                    .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
+                    .withClickEvent(new ClickEvent.CopyToClipboard(r.code))));
 
         src.sendFeedback(() -> ok, false);
         return 1;
