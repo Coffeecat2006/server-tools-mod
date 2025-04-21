@@ -2,6 +2,7 @@ package com.coffeecat2006;
 
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.world.PersistentState;
+import net.minecraft.world.PersistentStateType;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -14,14 +15,16 @@ public class RedeemState extends PersistentState {
     private static final Gson GSON = new Gson();
     private Map<String, RedeemManager.Redeem> codes = new HashMap<>();
 
+    public static final PersistentStateType<RedeemState> TYPE =
+        PersistentStateType.create(RedeemState::fromNbt, RedeemState::new);
+
     public RedeemState() {
-        super(); // 使用預設 constructor
+        super(TYPE);
     }
 
     public static RedeemState fromNbt(NbtCompound nbt) {
         RedeemState state = new RedeemState();
         if (nbt.contains("data")) {
-            // getString 返回 Optional<String>
             String json = nbt.getString("data").orElse("");
             JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
             for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
@@ -32,6 +35,7 @@ public class RedeemState extends PersistentState {
         return state;
     }
 
+    @Override
     public NbtCompound writeNbt(NbtCompound nbt) {
         JsonObject obj = new JsonObject();
         for (Map.Entry<String, RedeemManager.Redeem> e : codes.entrySet()) {
