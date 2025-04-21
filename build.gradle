@@ -1,9 +1,10 @@
 plugins {
+    id 'java'
     id 'fabric-loom' version '1.10.3'
 }
 
 version = '1.0.1'
-group = 'com.example.redeem'
+group   = 'com.example.redeem'
 
 repositories {
     maven { url 'https://maven.fabricmc.net/' }
@@ -20,12 +21,13 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+    // options.release = 21
 }
 
 loom {
