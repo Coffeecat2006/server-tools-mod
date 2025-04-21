@@ -1,8 +1,10 @@
 package com.coffeecat2006;
+
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.Style;
 import net.minecraft.item.ItemStack;
@@ -66,7 +68,7 @@ public class RedeemManager {
         for (ItemStack item : r.items) {
             ItemStack give = item.copy();
             give.setCount(item.getCount());
-            player.inventory.offerOrDrop(src.getWorld(), give);
+            player.getInventory().offerOrDrop(give);
         }
         r.redeemedCount++;
         r.usedPlayers.add(player.getUuid());
@@ -80,19 +82,25 @@ public class RedeemManager {
         codes.values().forEach(r -> {
             Duration left = Duration.between(Instant.now(), r.getExpiry());
             String remain = left.isNegative() ? "已過期" : left.toMinutes() + " 分鐘";
-            Text line = Text.literal(r.code)
-                .styled(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("點擊複製")))
-                                   .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, r.code)));
-            Text info = Text.literal(String.format(" [%d/%s] 剩餘: %s 訊息: %s",
+
+            MutableText line = Text.literal(r.code)
+                .styled(Style.EMPTY
+                    .withHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.literal("點擊複製")))
+                    .withClickEvent(ClickEvent.of(ClickEvent.Action.COPY_TO_CLIPBOARD, r.code)));
+
+            MutableText info = Text.literal(String.format(" [%d/%s] 剩餘: %s 訊息: %s",
                 r.redeemedCount, r.limit < 0 ? "∞" : r.limit, remain, r.message));
+
             src.sendFeedback(() -> line.append(info), false);
+
             if (!r.items.isEmpty()) {
                 r.items.forEach(item -> {
                     String id = item.getItem().toString();
                     String cnt = String.valueOf(item.getCount());
-                    Text it = Text.literal("[" + cnt + "x" + id + "]")
-                        .styled(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("點擊獲取此物品")))
-                                           .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/give @s " + id + " 1")));
+                    MutableText it = Text.literal("[" + cnt + "x" + id + "]")
+                        .styled(Style.EMPTY
+                            .withHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.literal("點擊獲取此物品")))
+                            .withClickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND, "/give @s " + id + " 1")));
                     src.sendFeedback(() -> it, false);
                 });
             }
@@ -122,10 +130,13 @@ public class RedeemManager {
         }
         codes.put(r.code, r);
         save();
-        Text ok = Text.literal("已建立: ")
+
+        MutableText ok = Text.literal("已建立: ")
             .append(Text.literal(r.code)
-                .styled(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("點擊複製")))
-                                   .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, r.code))));
+                .styled(Style.EMPTY
+                    .withHoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, Text.literal("點擊複製")))
+                    .withClickEvent(ClickEvent.of(ClickEvent.Action.COPY_TO_CLIPBOARD, r.code))));
+
         src.sendFeedback(() -> ok, false);
         return 1;
     }

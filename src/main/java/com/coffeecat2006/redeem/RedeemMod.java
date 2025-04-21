@@ -1,9 +1,8 @@
 package com.coffeecat2006;
+
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
-import net.minecraft.server.MinecraftServer;
-import com.google.gson.Gson;
 
 public class RedeemMod implements ModInitializer {
     @Override
@@ -16,7 +15,7 @@ public class RedeemMod implements ModInitializer {
         ServerWorldEvents.LOAD.register((server, world) -> {
             if (!world.getRegistryKey().getValue().toString().endsWith("overworld")) return;
             RedeemState state = world.getPersistentStateManager()
-                .getOrCreate(RedeemState::fromNbt, RedeemState::new, "redeem_codes");
+                .getOrCreate(RedeemState.TYPE, "redeem_codes");
             RedeemManager.init(state);
         });
     }

@@ -1,27 +1,31 @@
 package com.coffeecat2006;
+
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.world.PersistentState;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.PersistentStateType;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import java.time.Instant;
 import java.util.*;
 
 public class RedeemState extends PersistentState {
+    public static final PersistentStateType<RedeemState> TYPE =
+        PersistentStateType.create(RedeemState::new, RedeemState::fromNbt);
+
     private static final Gson GSON = new Gson();
     private Map<String, RedeemManager.Redeem> codes = new HashMap<>();
 
-    public RedeemState() { super("redeem_codes"); }
+    public RedeemState() {
+        super(TYPE, "redeem_codes");
+    }
 
     public static RedeemState fromNbt(NbtCompound nbt) {
         RedeemState state = new RedeemState();
         if (nbt.contains("data")) {
-            String json = nbt.getString("data");
+            String json = nbt.getString("data").orElse("");
             JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
             for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
                 RedeemManager.Redeem r = GSON.fromJson(e.getValue(), RedeemManager.Redeem.class);
@@ -41,5 +45,7 @@ public class RedeemState extends PersistentState {
         return nbt;
     }
 
-    public Map<String, RedeemManager.Redeem> getCodes() { return codes; }
+    public Map<String, RedeemManager.Redeem> getCodes() {
+        return codes;
+    }
 }
