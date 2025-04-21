@@ -16,7 +16,7 @@ public class RedeemMod implements ModInitializer {
             if (!world.getRegistryKey().getValue().toString().endsWith("overworld")) return;
             // 使用 fromNbt + new + key 三參 getOrCreate
             RedeemState state = world.getPersistentStateManager()
-                .getOrCreate(RedeemState.TYPE);
+            .getOrCreate(RedeemState::fromNbt, RedeemState::new, "redeem_codes");
             RedeemManager.init(state);
         });
     }
