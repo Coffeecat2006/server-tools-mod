@@ -1,6 +1,6 @@
 package com.coffeecat2006;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.world.PersistentState;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -14,12 +14,14 @@ public class RedeemState extends PersistentState {
     private static final Gson GSON = new Gson();
     private Map<String, RedeemManager.Redeem> codes = new HashMap<>();
 
-    public RedeemState() { super(); }
+    public RedeemState() {
+        super();
+    }
 
-    public static RedeemState fromNbt(CompoundTag tag) {
+    public static RedeemState fromNbt(NbtCompound nbt) {
         RedeemState state = new RedeemState();
-        if (tag.contains("data", 8)) {
-            String json = tag.getString("data");
+        if (nbt.contains("data")) {
+            String json = nbt.getString("data");
             JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
             for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
                 RedeemManager.Redeem r = GSON.fromJson(e.getValue(), RedeemManager.Redeem.class);
@@ -30,13 +32,13 @@ public class RedeemState extends PersistentState {
     }
 
     @Override
-    public CompoundTag writeNbt(CompoundTag tag) {
+    public NbtCompound writeNbt(NbtCompound nbt) {
         JsonObject obj = new JsonObject();
         for (Map.Entry<String, RedeemManager.Redeem> e : codes.entrySet()) {
             obj.add(e.getKey(), GSON.toJsonTree(e.getValue()));
         }
-        tag.putString("data", obj.toString());
-        return tag;
+        nbt.putString("data", obj.toString());
+        return nbt;
     }
 
     public Map<String, RedeemManager.Redeem> getCodes() {
