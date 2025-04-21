@@ -3,7 +3,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.text.Style;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -41,13 +41,13 @@ public class RedeemManager {
     public static int redeem(ServerCommandSource src, String code) {
         ServerPlayerEntity player;
         try { player = src.getPlayer(); } catch (Exception e) {
-            src.sendFeedback(new LiteralText("僅玩家可使用此指令"), false); return 0;
+            src.sendFeedback(Text.literal("僅玩家可使用此指令"), false); return 0;
         }
         Redeem r = codes.get(code);
-        if (r == null) { src.sendFeedback(new LiteralText("無此禮包碼: " + code), false); return 0; }
-        if (Instant.now().isAfter(r.getExpiry())) { src.sendFeedback(new LiteralText("此禮包碼已過期"), false); return 0; }
-        if (r.limit>=0 && r.redeemedCount>=r.limit) { src.sendFeedback(new LiteralText("此禮包碼已達使用上限"), false); return 0; }
-        if (r.singleUse && r.usedPlayers.contains(player.getUuid())) { src.sendFeedback(new LiteralText("你已經領取過此禮包碼"), false); return 0; }
+        if (r == null) { src.sendFeedback(Text.literal("無此禮包碼: " + code), false); return 0; }
+        if (Instant.now().isAfter(r.getExpiry())) { src.sendFeedback(Text.literal("此禮包碼已過期"), false); return 0; }
+        if (r.limit>=0 && r.redeemedCount>=r.limit) { src.sendFeedback(Text.literal("此禮包碼已達使用上限"), false); return 0; }
+        if (r.singleUse && r.usedPlayers.contains(player.getUuid())) { src.sendFeedback(Text.literal("你已經領取過此禮包碼"), false); return 0; }
         for (ItemStack item : r.items) {
             ItemStack give = item.copy(); give.setCount(item.getCount());
             player.inventory.offerOrDrop(src.getWorld(), give);
@@ -55,25 +55,25 @@ public class RedeemManager {
         r.redeemedCount++;
         r.usedPlayers.add(player.getUuid());
         save();
-        src.sendFeedback(new LiteralText(r.message), false);
+        src.sendFeedback(Text.literal(r.message), false);
         return 1;
     }
 
     public static int list(ServerCommandSource src) {
-        src.sendFeedback(new LiteralText("=== Redeem Codes ==="), false);
+        src.sendFeedback(Text.literal("=== Redeem Codes ==="), false);
         codes.values().forEach(r -> {
             Duration left = Duration.between(Instant.now(), r.getExpiry());
             String remain = left.isNegative() ? "已過期" : left.toMinutes()+" 分鐘";
-            LiteralText line = new LiteralText(r.code)
-                .styled(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("點擊複製")))
+            LiteralText line = Text.literal(r.code)
+                .styled(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("點擊複製")))
                                    .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, r.code)));
-            LiteralText info = new LiteralText(String.format(" [%d/%s] 剩餘: %s 訊息: %s",
+            LiteralText info = Text.literal(String.format(" [%d/%s] 剩餘: %s 訊息: %s",
                 r.redeemedCount, r.limit<0?"∞":r.limit, remain, r.message));
             src.sendFeedback(line.append(info), false);
             if (!r.items.isEmpty()) r.items.forEach(item -> {
                 String id = item.getItem().toString(), cnt = String.valueOf(item.getCount());
-                LiteralText it = new LiteralText("["+cnt+"x"+id+"]")
-                    .styled(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText("點擊獲取此物品")))
+                LiteralText it = Text.literal("["+cnt+"x"+id+"]")
+                    .styled(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("點擊獲取此物品")))
                                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/give @s "+id+" 1")));
                 src.sendFeedback(it, false);
             });
@@ -97,17 +97,17 @@ public class RedeemManager {
         } catch (Exception e) { r.items = new ArrayList<>(); }
         codes.put(r.code,r);
         save();
-        LiteralText ok = new LiteralText("已建立: ")
-            .append(new LiteralText(r.code)
-                .styled(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,new LiteralText("點擊複製")))
+        LiteralText ok = Text.literal("已建立: ")
+            .append(Text.literal(r.code)
+                .styled(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,Text.literal("點擊複製")))
                                    .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD,r.code))));
         src.sendFeedback(ok,false);
         return 1;
     }
 
     public static int remove(ServerCommandSource src, String code) {
-        if (codes.remove(code)!=null) { save(); src.sendFeedback(new LiteralText("已移除禮包碼: " + code), false); }
-        else src.sendFeedback(new LiteralText("找不到禮包碼: " + code), false);
+        if (codes.remove(code)!=null) { save(); src.sendFeedback(Text.literal("已移除禮包碼: " + code), false); }
+        else src.sendFeedback(Text.literal("找不到禮包碼: " + code), false);
         return 1;
     }
 }
