@@ -28,7 +28,7 @@ public class RedeemCommands {
                 StringArgumentType.getString(ctx, "limit"),
                 StringArgumentType.getString(ctx, "time"),
                 StringArgumentType.getString(ctx, "rules")
-            )))))));
+            ))))))));
         dispatcher.register(CommandManager.literal("redeem_remove")
             .requires(src -> src.hasPermissionLevel(2))
             .then(CommandManager.argument("code", StringArgumentType.string())
