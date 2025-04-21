@@ -1,4 +1,4 @@
-package com.coffeecat2006;
+package com.coffeecat2006.redeem;
 
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.world.PersistentState;
@@ -12,7 +12,7 @@ import java.util.Map;
 
 public class RedeemState extends PersistentState {
     private static final Gson GSON = new Gson();
-    private Map<String, RedeemManager.Redeem> codes = new HashMap<>();
+    private final Map<String, RedeemManager.Redeem> codes = new HashMap<>();
 
     public RedeemState() {
         super();
@@ -21,7 +21,8 @@ public class RedeemState extends PersistentState {
     public static RedeemState fromNbt(NbtCompound nbt) {
         RedeemState state = new RedeemState();
         if (nbt.contains("data")) {
-            String json = nbt.getString("data");
+            // 處理 Optional<String>
+            String json = nbt.getString("data").orElse("");
             JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
             for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
                 RedeemManager.Redeem r = GSON.fromJson(e.getValue(), RedeemManager.Redeem.class);
