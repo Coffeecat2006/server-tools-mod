@@ -4,11 +4,11 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
 
 public class RedeemMod implements ModInitializer {
     @Override
     public void onInitialize() {
+
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             RedeemCommands.register(dispatcher);
         });
@@ -17,8 +17,7 @@ public class RedeemMod implements ModInitializer {
             if (!world.getRegistryKey().getValue().toString().endsWith("overworld")) return;
 
             RedeemState state = world.getPersistentStateManager()
-                .getOrCreate(RedeemState::fromNbt, RedeemState::new,
-                    new Identifier("redeemmod", "redeem_codes"));
+                .getOrCreate(RedeemState.TYPE, "redeemmod:redeem_codes");
             RedeemManager.init(state);
         });
     }
