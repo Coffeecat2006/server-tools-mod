@@ -4,11 +4,13 @@ package com.coffeecat2006.redeem;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.world.PersistentState;
+import net.minecraft.world.PersistentStateType;
 import net.minecraft.datafixer.DataFixTypes;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.serialization.Codec;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,20 +20,20 @@ public class RedeemState extends PersistentState {
     private static final Gson GSON = new Gson();
     private final Map<String, RedeemManager.Redeem> codes = new HashMap<>();
 
-    public RedeemState() {}
+    public RedeemState() {
+        super();
+    }
 
-    /** 用於反序列化 */
+    /** 反序列化（供 readNbt 與 getOrCreate 用） */
     public static RedeemState fromNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup lookup) {
         RedeemState state = new RedeemState();
         if (nbt.contains("data")) {
-            Optional<String> jsonOpt = nbt.getString("data");
-            jsonOpt.ifPresent(json -> {
-                JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
-                for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
-                    RedeemManager.Redeem r = GSON.fromJson(e.getValue(), RedeemManager.Redeem.class);
-                    state.codes.put(e.getKey(), r);
-                }
-            });
+            String json = nbt.getString("data").orElse("");
+            JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
+            for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
+                RedeemManager.Redeem r = GSON.fromJson(e.getValue(), RedeemManager.Redeem.class);
+                state.codes.put(e.getKey(), r);
+            }
         }
         return state;
     }
@@ -40,14 +42,12 @@ public class RedeemState extends PersistentState {
     public void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup lookup) {
         codes.clear();
         if (nbt.contains("data")) {
-            Optional<String> jsonOpt = nbt.getString("data");
-            jsonOpt.ifPresent(json -> {
-                JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
-                for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
-                    RedeemManager.Redeem r = GSON.fromJson(e.getValue(), RedeemManager.Redeem.class);
-                    codes.put(e.getKey(), r);
-                }
-            });
+            String json = nbt.getString("data").orElse("");
+            JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
+            for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
+                RedeemManager.Redeem r = GSON.fromJson(e.getValue(), RedeemManager.Redeem.class);
+                codes.put(e.getKey(), r);
+            }
         }
     }
 
@@ -65,11 +65,15 @@ public class RedeemState extends PersistentState {
         return codes;
     }
 
-    /** TYPE 定義，供 getOrCreate 使用 */
-    public static final PersistentState.Type<RedeemState> TYPE =
-        new PersistentState.Type<>(
+    // 最簡 Codec stub——僅為了讓 TYPE 建構子能編譯通過，實務上應換成真正的序/反序列化 codec
+    public static final Codec<RedeemState> DUMMY_CODEC = Codec.unit(new RedeemState());
+
+    /** TYPE 定義，供 PersistentStateManager.getOrCreate(TYPE) 使用  */
+    public static final PersistentStateType<RedeemState> TYPE =
+        new PersistentStateType<>(
+            "redeemmod_redeem_codes",
             RedeemState::new,
-            RedeemState::fromNbt,
+            DUMMY_CODEC,
             DataFixTypes.SAVED_DATA
         );
 }
