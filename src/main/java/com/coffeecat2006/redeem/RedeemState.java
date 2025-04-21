@@ -16,10 +16,10 @@ public class RedeemState extends PersistentState {
     private Map<String, RedeemManager.Redeem> codes = new HashMap<>();
 
     public static final PersistentStateType<RedeemState> TYPE =
-        PersistentStateType.create(RedeemState::fromNbt, RedeemState::new);
+        PersistentStateType.create(RedeemState::fromNbt, "redeem_codes");
 
     public RedeemState() {
-        super(TYPE);
+        super();
     }
 
     public static RedeemState fromNbt(NbtCompound nbt) {
