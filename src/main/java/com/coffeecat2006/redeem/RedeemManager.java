@@ -9,7 +9,7 @@ import net.minecraft.text.Text;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.Formatting;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -87,13 +87,13 @@ public class RedeemManager {
             Duration left = Duration.between(Instant.now(), r.getExpiry());
             String remain = left.isNegative() ? "已過期" : left.toMinutes() + " 分鐘";
 
-            MutableText line = Text.literal(r.code).styled(style ->
-                style
-                    .withColor(Formatting.AQUA)
-                    .withUnderline(true)
-                    .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
-                    .withClickEvent(new ClickEvent.CopyToClipboard(r.code))
-            );
+            MutableText line = Text.literal(r.code)
+                .formatted(Formatting.AQUA, Formatting.UNDERLINE)
+                .styled(style ->
+                    style
+                        .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
+                        .withClickEvent(new ClickEvent.CopyToClipboard(r.code))
+                );
 
             MutableText info = Text.literal(String.format(
                 " [%d/%s] 剩餘: %s 訊息: %s",
@@ -109,17 +109,16 @@ public class RedeemManager {
                 for (ItemStack item : r.items) {
                     String id = item.getItem().toString();
                     String cnt = String.valueOf(item.getCount());
-                    CompoundTag tag = item.getTag();
-                    String nbtString = (tag != null) ? tag.toString() : "";
-                    String cmd = "/give @s " + id + " 1 " + nbtString;
-
-                    MutableText it = Text.literal("[" + cnt + "x" + id + "]").styled(style ->
-                        style
-                            .withColor(Formatting.GOLD)
-                            .withUnderline(true)
-                            .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊獲取此物品")))
-                            .withClickEvent(new ClickEvent.RunCommand(cmd))
-                    );
+                    NbtCompound tag = item.getNbt();
+                    String tagString = (tag != null) ? tag.toString() : "";
+                    String giveCommand = "/give @s " + id + " 1" + (!tagString.isEmpty() ? " " + tagString : "");
+                    MutableText it = Text.literal("[" + cnt + "x" + id + "]")
+                        .formatted(Formatting.GOLD, Formatting.UNDERLINE)
+                        .styled(style ->
+                            style
+                                .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊獲取此物品")))
+                                .withClickEvent(new ClickEvent.RunCommand(giveCommand))
+                        );
                     src.sendFeedback(() -> it, false);
                 }
             }
@@ -129,16 +128,15 @@ public class RedeemManager {
     }
 
     public static int add(ServerCommandSource src, String code, String text, String limitStr, String timeStr, String rulesStr) {
-        Redeem r = new Redeem();
-        r.code = code.equalsIgnoreCase("random")
-            ? UUID.randomUUID().toString().replace("-", "").substring(0, new Random().nextInt(5) + 12)
-            : code;
-
-        if (codes.containsKey(r.code)) {
+        if (codes.containsKey(code)) {
             src.sendFeedback(() -> Text.literal("此禮包碼已存在"), false);
             return 0;
         }
 
+        Redeem r = new Redeem();
+        r.code = code.equalsIgnoreCase("random")
+            ? UUID.randomUUID().toString().replace("-", "").substring(0, new Random().nextInt(5) + 12)
+            : code;
         r.message = text;
         r.limit = limitStr.equalsIgnoreCase("infinity") ? -1 : Integer.parseInt(limitStr);
         r.expiryEpoch = timeStr.equalsIgnoreCase("infinity")
@@ -160,11 +158,12 @@ public class RedeemManager {
         state.markDirty();
 
         MutableText ok = Text.literal("已建立: ").append(
-            Text.literal(r.code).styled(style ->
-                style
-                    .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
-                    .withClickEvent(new ClickEvent.CopyToClipboard(r.code))
-            )
+            Text.literal(r.code).formatted(Formatting.AQUA, Formatting.UNDERLINE)
+                .styled(style ->
+                    style
+                        .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
+                        .withClickEvent(new ClickEvent.CopyToClipboard(r.code))
+                )
         );
 
         src.sendFeedback(() -> ok, false);
