@@ -3,10 +3,10 @@
 	"id": "redeemmod",
 	"version": "1.0.1",
 	"name": "RedeemCode Mod",
-	"description": "伺服器端禮包碼系統，支援持久化存檔。",
+	"description": "伺服器端禮包碼系統。",
 	"authors": ["coffeecat2006"],
 	"license": "MIT",
-	"environment": "server",
+	"environment": "*",
 	"entrypoints": {
 	  "main": ["com.coffeecat2006.redeem.RedeemMod"]
 	},
