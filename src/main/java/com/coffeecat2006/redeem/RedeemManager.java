@@ -109,8 +109,8 @@ public class RedeemManager {
                 for (ItemStack item : r.items) {
                     String id = item.getItem().toString();
                     String cnt = String.valueOf(item.getCount());
-                    NbtCompound tag = item.getNbt();
-                    String tagString = (tag != null) ? tag.toString() : "";
+                    NbtCompound tag = item.getOrCreateNbt();
+                    String tagString = (tag != null && !tag.isEmpty()) ? tag.toString() : "";
                     String giveCommand = "/give @s " + id + " 1" + (!tagString.isEmpty() ? " " + tagString : "");
                     MutableText it = Text.literal("[" + cnt + "x" + id + "]")
                         .formatted(Formatting.GOLD, Formatting.UNDERLINE)
