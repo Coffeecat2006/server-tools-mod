@@ -35,20 +35,22 @@ public class RedeemState extends PersistentState {
         super();
     }
 
-    // 移除 @Override 標記
     public void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup lookup) {
         codes.clear();
-        if (nbt.contains("data")) {  // 使用 contains 檢查而非 getString + Optional
-            String jsonStr = nbt.getString("data");
-            JsonObject obj = JsonParser.parseString(jsonStr).getAsJsonObject();
-            for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
-                RedeemManager.Redeem r = GSON.fromJson(e.getValue(), RedeemManager.Redeem.class);
-                codes.put(e.getKey(), r);
+        if (nbt.contains("data")) {
+            // 處理 getString 返回的 Optional<String>
+            Optional<String> jsonOpt = nbt.getString("data");
+            if (jsonOpt.isPresent()) {
+                String jsonStr = jsonOpt.get();
+                JsonObject obj = JsonParser.parseString(jsonStr).getAsJsonObject();
+                for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
+                    RedeemManager.Redeem r = GSON.fromJson(e.getValue(), RedeemManager.Redeem.class);
+                    codes.put(e.getKey(), r);
+                }
             }
         }
     }
 
-    // 移除 @Override 標記
     public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup lookup) {
         JsonObject obj = new JsonObject();
         for (Map.Entry<String, RedeemManager.Redeem> e : codes.entrySet()) {
