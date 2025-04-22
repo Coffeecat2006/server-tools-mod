@@ -28,19 +28,19 @@ public class RedeemState extends PersistentState {
             "redeemmod:redeem_codes",               // 存檔檔名
             RedeemState::new,                        // 建構函式
             CODEC,                                   // 編/解碼器
-            DataFixTypes.SAVED_DATA_COMMAND_STORAGE  // 指令儲存資料 :contentReference[oaicite:2]{index=2}
+            DataFixTypes.SAVED_DATA_COMMAND_STORAGE  // 指令儲存資料
         );
 
     public RedeemState() {
         super();
     }
 
-    @Override
+    // 移除 @Override 標記
     public void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup lookup) {
         codes.clear();
-        Optional<String> jsonOpt = nbt.getString("data");
-        if (jsonOpt.isPresent()) {
-            JsonObject obj = JsonParser.parseString(jsonOpt.get()).getAsJsonObject();
+        if (nbt.contains("data")) {  // 使用 contains 檢查而非 getString + Optional
+            String jsonStr = nbt.getString("data");
+            JsonObject obj = JsonParser.parseString(jsonStr).getAsJsonObject();
             for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
                 RedeemManager.Redeem r = GSON.fromJson(e.getValue(), RedeemManager.Redeem.class);
                 codes.put(e.getKey(), r);
@@ -48,7 +48,7 @@ public class RedeemState extends PersistentState {
         }
     }
 
-    @Override
+    // 移除 @Override 標記
     public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup lookup) {
         JsonObject obj = new JsonObject();
         for (Map.Entry<String, RedeemManager.Redeem> e : codes.entrySet()) {
