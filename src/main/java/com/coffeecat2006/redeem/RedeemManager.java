@@ -8,6 +8,8 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.util.Formatting;
+import net.minecraft.nbt.CompoundTag;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -87,6 +89,8 @@ public class RedeemManager {
 
             MutableText line = Text.literal(r.code).styled(style ->
                 style
+                    .withColor(Formatting.AQUA)
+                    .withUnderline(true)
                     .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
                     .withClickEvent(new ClickEvent.CopyToClipboard(r.code))
             );
@@ -105,10 +109,16 @@ public class RedeemManager {
                 for (ItemStack item : r.items) {
                     String id = item.getItem().toString();
                     String cnt = String.valueOf(item.getCount());
+                    CompoundTag tag = item.getTag();
+                    String nbtString = (tag != null) ? tag.toString() : "";
+                    String cmd = "/give @s " + id + " 1 " + nbtString;
+
                     MutableText it = Text.literal("[" + cnt + "x" + id + "]").styled(style ->
                         style
+                            .withColor(Formatting.GOLD)
+                            .withUnderline(true)
                             .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊獲取此物品")))
-                            .withClickEvent(new ClickEvent.RunCommand("/give @s " + id + " 1"))
+                            .withClickEvent(new ClickEvent.RunCommand(cmd))
                     );
                     src.sendFeedback(() -> it, false);
                 }
@@ -123,6 +133,12 @@ public class RedeemManager {
         r.code = code.equalsIgnoreCase("random")
             ? UUID.randomUUID().toString().replace("-", "").substring(0, new Random().nextInt(5) + 12)
             : code;
+
+        if (codes.containsKey(r.code)) {
+            src.sendFeedback(() -> Text.literal("此禮包碼已存在"), false);
+            return 0;
+        }
+
         r.message = text;
         r.limit = limitStr.equalsIgnoreCase("infinity") ? -1 : Integer.parseInt(limitStr);
         r.expiryEpoch = timeStr.equalsIgnoreCase("infinity")
