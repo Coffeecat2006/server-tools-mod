@@ -8,17 +8,15 @@ import net.minecraft.server.world.ServerWorld;
 public class RedeemMod implements ModInitializer {
     @Override
     public void onInitialize() {
-        // 註冊 /redeem 系列指令
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            RedeemCommands.register(dispatcher);
-        });
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
+            RedeemCommands.register(dispatcher)
+        );
 
-        // 世界載入時透過 TYPE 讀取或建立 PersistentState
         ServerWorldEvents.LOAD.register((server, world) -> {
             if (!world.getRegistryKey().getValue().toString().endsWith("overworld")) return;
 
             RedeemState state = world.getPersistentStateManager()
-                .getOrCreate(RedeemState.TYPE);  // 僅傳入 TYPE :contentReference[oaicite:3]{index=3}
+                .getOrCreate(RedeemState.TYPE);
             RedeemManager.init(state);
         });
     }
