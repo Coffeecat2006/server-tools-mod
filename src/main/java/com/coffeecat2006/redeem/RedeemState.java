@@ -9,6 +9,7 @@ import net.minecraft.item.ItemStack;
 
 import java.util.*;
 
+
 public class RedeemState extends PersistentState {
     private final Map<String, RedeemManager.Redeem> codes;
 
@@ -65,7 +66,7 @@ public class RedeemState extends PersistentState {
 
     public static final PersistentStateType<RedeemState> TYPE =
         new PersistentStateType<>(
-            "redeemmod_codes",
+            "redeemmod:redeem_codes",
             RedeemState::new,
             CODEC,
             DataFixTypes.SAVED_DATA_COMMAND_STORAGE
