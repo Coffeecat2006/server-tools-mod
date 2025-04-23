@@ -1,27 +1,23 @@
 package com.coffeecat2006.redeem;
 
 import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateManager;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.world.PersistentStateType;
 import net.minecraft.datafixer.DataFixTypes;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.item.ItemStack;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.PersistentStateType;
-
 import java.util.*;
 
 public class RedeemState extends PersistentState {
-    public static final String ID = "redeemmod_codes";
     private final Map<String, RedeemManager.Redeem> codes;
 
     public RedeemState() {
+        super();
         this.codes = new HashMap<>();
     }
 
     private RedeemState(Map<String, RedeemManager.Redeem> codes) {
+        super();
         this.codes = new HashMap<>(codes);
     }
 
@@ -39,26 +35,13 @@ public class RedeemState extends PersistentState {
             ItemStack.CODEC.listOf().fieldOf("items").forGetter(r -> r.items),
             Codec.INT.fieldOf("redeemedCount").forGetter(r -> r.redeemedCount),
             Codec.STRING.listOf()
-                .xmap(
-                    list -> { 
-                        Set<UUID> s = new HashSet<>(); 
-                        for (String u: list) {
-                            try {
-                                s.add(UUID.fromString(u)); 
-                            } catch (IllegalArgumentException e) {
-                                // Skip invalid UUIDs
-                            }
-                        }
-                        return s; 
-                    },
-                    set -> { 
-                        List<String> ls = new ArrayList<>(); 
-                        for (UUID u: set) ls.add(u.toString()); 
-                        return ls; 
-                    }
-                )
-                .fieldOf("usedPlayers").forGetter(r -> r.usedPlayers)
-        ).apply(instance, (code, message, limit, expiryEpoch, singleUse, items, redeemedCount, usedPlayers) -> {
+                 .xmap(
+                     list -> { Set<UUID> s = new HashSet<>(); for (String u: list) s.add(UUID.fromString(u)); return s; },
+                     set  -> { List<String> ls = new ArrayList<>(); for (UUID u: set) ls.add(u.toString()); return ls; }
+                 )
+                 .fieldOf("usedPlayers").forGetter(r -> r.usedPlayers)
+        )
+        .apply(instance, (code, message, limit, expiryEpoch, singleUse, items, redeemedCount, usedPlayers) -> {
             RedeemManager.Redeem r = new RedeemManager.Redeem();
             r.code = code;
             r.message = message;
@@ -77,24 +60,14 @@ public class RedeemState extends PersistentState {
             Codec.unboundedMap(Codec.STRING, REDEEM_CODEC)
                  .fieldOf("codes")
                  .forGetter(RedeemState::getCodes)
-        ).apply(instance, RedeemState::new)
+        )
+        .apply(instance, RedeemState::new)
     );
 
-    // Create a persistent state type
-    public static final PersistentStateType<RedeemState> TYPE =
-    new PersistentStateType<>(
-        RedeemState::new,
-        CODEC,
-        DataFixTypes.SAVED_DATA_COMMAND_STORAGE
-    );
-
-    // Helper method to get or create state from world
-    public static RedeemState getOrCreate(ServerWorld world) {
-        PersistentStateManager persistentStateManager = world.getPersistentStateManager();
-        
-        return persistentStateManager.getOrCreate(
-            TYPE,
-            ID
+    public static final PersistentStateType<RedeemState> TYPE = 
+        new PersistentStateType<RedeemState>(
+            RedeemState::new,
+            CODEC,
+            DataFixTypes.SAVED_DATA_COMMAND_STORAGE
         );
-    }
 }
