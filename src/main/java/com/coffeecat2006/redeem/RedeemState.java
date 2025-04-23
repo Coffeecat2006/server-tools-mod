@@ -35,11 +35,11 @@ public class RedeemState extends PersistentState {
             ItemStack.CODEC.listOf().fieldOf("items").forGetter(r -> r.items),
             Codec.INT.fieldOf("redeemedCount").forGetter(r -> r.redeemedCount),
             Codec.STRING.listOf()
-                .xmap(
-                    list -> { Set<UUID> s = new HashSet<>(); for (String u : list) s.add(UUID.fromString(u)); return s; },
-                    set -> { List<String> ls = new ArrayList<>(); for (UUID u : set) ls.add(u.toString()); return ls; }
-                )
-                .fieldOf("usedPlayers").forGetter(r -> r.usedPlayers)
+                 .xmap(
+                     list -> { Set<UUID> s = new HashSet<>(); for (String u: list) s.add(UUID.fromString(u)); return s; },
+                     set  -> { List<String> ls = new ArrayList<>(); for (UUID u: set) ls.add(u.toString()); return ls; }
+                 )
+                 .fieldOf("usedPlayers").forGetter(r -> r.usedPlayers)
         )
         .apply(instance, (code, message, limit, expiryEpoch, singleUse, items, redeemedCount, usedPlayers) -> {
             RedeemManager.Redeem r = new RedeemManager.Redeem();
@@ -64,10 +64,11 @@ public class RedeemState extends PersistentState {
         .apply(instance, RedeemState::new)
     );
 
-    public static final PersistentStateType<RedeemState> TYPE = new PersistentStateType<>(
-        "redeemmod_codes",
-        RedeemState::new,
-        CODEC,
-        DataFixTypes.SAVED_DATA_COMMAND_STORAGE
-    );
+    public static final PersistentStateType<RedeemState> TYPE =
+        new PersistentStateType<>(
+            "redeemmod_codes",
+            RedeemState::new,
+            CODEC,
+            DataFixTypes.SAVED_DATA_COMMAND_STORAGE
+        );
 }

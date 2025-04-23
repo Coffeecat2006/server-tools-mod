@@ -16,8 +16,8 @@ public class RedeemMod implements ModInitializer {
         ServerWorldEvents.LOAD.register((server, world) -> {
             if (world.getRegistryKey() != World.OVERWORLD) return;
 
-            var state = world.getPersistentStateManager()
-                .getOrCreate(RedeemState.TYPE, "redeemmod_codes");
+            RedeemState state = world.getPersistentStateManager()
+                .getOrCreate(RedeemState.TYPE);
             RedeemManager.init(state);
         });
     }
