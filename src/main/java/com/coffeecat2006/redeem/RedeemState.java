@@ -17,12 +17,10 @@ public class RedeemState extends PersistentState {
     private final Map<String, RedeemManager.Redeem> codes;
 
     public RedeemState() {
-        super();
         this.codes = new HashMap<>();
     }
 
     private RedeemState(Map<String, RedeemManager.Redeem> codes) {
-        super();
         this.codes = new HashMap<>(codes);
     }
 
@@ -81,14 +79,11 @@ public class RedeemState extends PersistentState {
         ).apply(instance, RedeemState::new)
     );
 
-    // Create a type for Minecraft's persistence system
-    public static final Type<RedeemState> TYPE = new Type<>(
-        RedeemState::new, 
-        (state, codec) -> codec.encodeStart(CODEC, state)
-            .getOrThrow(false, error -> {
-                throw new RuntimeException("Failed to encode RedeemState: " + error);
-            }),
-        CODEC
+    // Create a persistent state type
+    public static final PersistentStateType<RedeemState> TYPE = PersistentStateType.create(
+        () -> new RedeemState(),
+        CODEC,
+        DataFixTypes.SAVED_DATA_COMMAND_STORAGE
     );
 
     // Helper method to get or create state from world
