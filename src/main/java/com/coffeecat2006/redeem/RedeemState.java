@@ -9,6 +9,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
+import net.minecraft.world.PersistentStateType;
 
 import java.util.*;
 
@@ -80,8 +81,9 @@ public class RedeemState extends PersistentState {
     );
 
     // Create a persistent state type
-    public static final PersistentStateType<RedeemState> TYPE = PersistentStateType.create(
-        () -> new RedeemState(),
+    public static final PersistentStateType<RedeemState> TYPE =
+    new PersistentStateType<>(
+        RedeemState::new,
         CODEC,
         DataFixTypes.SAVED_DATA_COMMAND_STORAGE
     );
