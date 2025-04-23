@@ -37,13 +37,29 @@ public class RedeemManager {
 
     public static int redeem(ServerCommandSource src, String code) {
         ServerPlayerEntity player;
-        try { player = src.getPlayer(); }
-        catch (Exception e) { src.sendFeedback(() -> Text.literal("僅玩家可使用此指令"), false); return 0; }
+        try {
+            player = src.getPlayer();
+        } catch (Exception e) {
+            src.sendFeedback(() -> Text.literal("僅玩家可使用此指令"), false);
+            return 0;
+        }
         Redeem r = codes.get(code);
-        if (r == null) { src.sendFeedback(() -> Text.literal("無此禮包碼: " + code), false); return 0; }
-        if (Instant.now().isAfter(r.getExpiry())) { src.sendFeedback(() -> Text.literal("此禮包碼已過期"), false); return 0; }
-        if (r.limit >= 0 && r.redeemedCount >= r.limit) { src.sendFeedback(() -> Text.literal("此禮包碼已達使用上限"), false); return 0; }
-        if (r.singleUse && r.usedPlayers.contains(player.getUuid())) { src.sendFeedback(() -> Text.literal("你已經領取過此禮包碼"), false); return 0; }
+        if (r == null) {
+            src.sendFeedback(() -> Text.literal("無此禮包碼: " + code), false);
+            return 0;
+        }
+        if (r.expiryEpoch != Long.MAX_VALUE && Instant.now().isAfter(Instant.ofEpochSecond(r.expiryEpoch))) {
+            src.sendFeedback(() -> Text.literal("此禮包碼已過期"), false);
+            return 0;
+        }
+        if (r.limit >= 0 && r.redeemedCount >= r.limit) {
+            src.sendFeedback(() -> Text.literal("此禮包碼已達使用上限"), false);
+            return 0;
+        }
+        if (r.singleUse && r.usedPlayers.contains(player.getUuid())) {
+            src.sendFeedback(() -> Text.literal("你已經領取過此禮包碼"), false);
+            return 0;
+        }
         for (ItemStack item : r.items) {
             ItemStack give = item.copy();
             give.setCount(item.getCount());
@@ -59,20 +75,41 @@ public class RedeemManager {
     public static int list(ServerCommandSource src) {
         src.sendFeedback(() -> Text.literal("=== Redeem Codes ==="), false);
         for (Redeem r : codes.values()) {
-            Duration left = Duration.between(Instant.now(), r.getExpiry());
-            String remain = left.isNegative() ? "已過期" : left.toMinutes() + " 分鐘";
-            MutableText line = Text.literal(r.code).formatted(Formatting.AQUA, Formatting.UNDERLINE)
-                .styled(style -> style.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
-                                      .withClickEvent(new ClickEvent.CopyToClipboard(r.code)));
-            MutableText info = Text.literal(String.format(" [%d/%s] 剩餘: %s 訊息: %s",
-                r.redeemedCount, r.limit < 0 ? "∞" : r.limit, remain, r.message));
+            String remain;
+            if (r.expiryEpoch == Long.MAX_VALUE) {
+                remain = "永不過期";
+            } else {
+                Instant expiry = Instant.ofEpochSecond(r.expiryEpoch);
+                if (Instant.now().isAfter(expiry)) {
+                    remain = "已過期";
+                } else {
+                    long mins = Duration.between(Instant.now(), expiry).toMinutes();
+                    remain = mins + " 分鐘";
+                }
+            }
+            MutableText line = Text.literal(r.code)
+                .formatted(Formatting.AQUA, Formatting.UNDERLINE)
+                .styled(style -> style
+                    .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
+                    .withClickEvent(new ClickEvent.CopyToClipboard(r.code))
+                );
+            MutableText info = Text.literal(String.format(
+                " [%d/%s] 剩餘: %s 訊息: %s",
+                r.redeemedCount,
+                r.limit < 0 ? "∞" : r.limit,
+                remain,
+                r.message
+            ));
             src.sendFeedback(() -> line.append(info), false);
             if (!r.items.isEmpty()) {
                 for (ItemStack item : r.items) {
                     String label = item.getCount() + "x" + item.getItem().toString();
-                    MutableText it = Text.literal("[" + label + "]").formatted(Formatting.GOLD, Formatting.UNDERLINE)
-                        .styled(style -> style.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊獲取此物品")))
-                                              .withClickEvent(new ClickEvent.RunCommand("/redeem_preview item " + r.code)));
+                    MutableText it = Text.literal("[" + label + "]")
+                        .formatted(Formatting.GOLD, Formatting.UNDERLINE)
+                        .styled(style -> style
+                            .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊獲取此物品")))
+                            .withClickEvent(new ClickEvent.RunCommand("/redeem_preview item " + r.code))
+                        );
                     src.sendFeedback(() -> it, false);
                 }
             }
@@ -80,62 +117,84 @@ public class RedeemManager {
         return 1;
     }
 
-    public static int add(ServerCommandSource src,
-                          String code,
-                          String text,
-                          String limitStr,
-                          String timeStr,
-                          boolean singleUse) {
-        if (codes.containsKey(code)) { src.sendFeedback(() -> Text.literal("此禮包碼已存在"), false); return 0; }
+    public static int add(ServerCommandSource src, String code, String text, String limitStr, String timeStr, boolean singleUse) {
+        if (codes.containsKey(code)) {
+            src.sendFeedback(() -> Text.literal("此禮包碼已存在"), false);
+            return 0;
+        }
         Redeem r = new Redeem();
         r.code = code.equalsIgnoreCase("random")
             ? UUID.randomUUID().toString().replace("-", "").substring(0, new Random().nextInt(5) + 12)
             : code;
         r.message = text;
-        if (limitStr.equalsIgnoreCase("infinity")) r.limit = -1;
-        else {
-            try { r.limit = Integer.parseInt(limitStr); }
-            catch (NumberFormatException e) { src.sendFeedback(() -> Text.literal("limit 必須是數字或 infinity"), false); return 0; }
+        if (limitStr.equalsIgnoreCase("infinity")) {
+            r.limit = -1;
+        } else {
+            try {
+                r.limit = Integer.parseInt(limitStr);
+            } catch (NumberFormatException e) {
+                src.sendFeedback(() -> Text.literal("limit 必須是數字或 infinity"), false);
+                return 0;
+            }
         }
-        if (timeStr.equalsIgnoreCase("infinity")) r.expiryEpoch = Long.MAX_VALUE;
-        else {
+        if (timeStr.equalsIgnoreCase("infinity")) {
+            r.expiryEpoch = Long.MAX_VALUE;
+        } else {
             try {
                 long minutes = Long.parseLong(timeStr);
                 r.expiryEpoch = Instant.now().plus(Duration.ofMinutes(minutes)).getEpochSecond();
-            } catch (NumberFormatException e) { src.sendFeedback(() -> Text.literal("time 必須是數字或 infinity"), false); return 0; }
+            } catch (NumberFormatException e) {
+                src.sendFeedback(() -> Text.literal("time 必須是數字或 infinity"), false);
+                return 0;
+            }
         }
         r.singleUse = singleUse;
         try {
             ServerPlayerEntity player = src.getPlayer();
             ItemStack off = player.getOffHandStack();
             r.items = (off != null && off.getItem() != Items.AIR)
-                      ? Collections.singletonList(off.copy())
-                      : new ArrayList<>();
+                ? Collections.singletonList(off.copy())
+                : new ArrayList<>();
         } catch (Exception e) {
             r.items = new ArrayList<>();
         }
         codes.put(r.code, r);
         state.markDirty();
         MutableText ok = Text.literal("已建立: ").append(
-            Text.literal(r.code).formatted(Formatting.AQUA, Formatting.UNDERLINE)
-                .styled(style -> style.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
-                                      .withClickEvent(new ClickEvent.CopyToClipboard(r.code))));
+            Text.literal(r.code)
+                .formatted(Formatting.AQUA, Formatting.UNDERLINE)
+                .styled(style -> style
+                    .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
+                    .withClickEvent(new ClickEvent.CopyToClipboard(r.code))
+                )
+        );
         src.sendFeedback(() -> ok, false);
         return 1;
     }
 
     public static int remove(ServerCommandSource src, String code) {
-        if (codes.remove(code) != null) { state.markDirty(); src.sendFeedback(() -> Text.literal("已移除禮包碼: " + code), false); }
-        else { src.sendFeedback(() -> Text.literal("找不到禮包碼: " + code), false); }
+        if (codes.remove(code) != null) {
+            state.markDirty();
+            src.sendFeedback(() -> Text.literal("已移除禮包碼: " + code), false);
+        } else {
+            src.sendFeedback(() -> Text.literal("找不到禮包碼: " + code), false);
+        }
         return 1;
     }
 
     public static int previewItem(ServerCommandSource src, String code) {
         ServerPlayerEntity player;
-        try { player = src.getPlayer(); }
-        catch (Exception e) { src.sendFeedback(() -> Text.literal("僅玩家可使用此指令"), false); return 0; }
+        try {
+            player = src.getPlayer();
+        } catch (Exception e) {
+            src.sendFeedback(() -> Text.literal("僅玩家可使用此指令"), false);
+            return 0;
+        }
         Redeem r = codes.get(code);
-        if (r == null) { src.sendFeedback(() -> Text.literal("無此禮包碼: " + code), false); return 0; }
+        if (r == null) {
+            src.sendFeedback(() -> Text.literal("無此禮包碼: " + code), false);
+            return 0;
+        }
         for (ItemStack item : r.items) {
             ItemStack give = item.copy();
             give.setCount(item.getCount());
@@ -146,7 +205,10 @@ public class RedeemManager {
 
     public static int previewText(ServerCommandSource src, String code) {
         Redeem r = codes.get(code);
-        if (r == null) { src.sendFeedback(() -> Text.literal("無此禮包碼: " + code), false); return 0; }
+        if (r == null) {
+            src.sendFeedback(() -> Text.literal("無此禮包碼: " + code), false);
+            return 0;
+        }
         src.sendFeedback(() -> Text.literal(r.message), false);
         return 1;
     }
