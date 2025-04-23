@@ -4,6 +4,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.world.dimension.DimensionTypes;
 
 public class RedeemMod implements ModInitializer {
     @Override
@@ -11,12 +12,15 @@ public class RedeemMod implements ModInitializer {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
             RedeemCommands.register(dispatcher)
         );
-
+        
+        // Initialize the redeem manager when the overworld is loaded
         ServerWorldEvents.LOAD.register((server, world) -> {
-            if (!world.getRegistryKey().getValue().toString().endsWith("overworld")) return;
-
-            RedeemState state = world.getPersistentStateManager()
-                .getOrCreate(RedeemState.TYPE);
+            // Only initialize once using the overworld
+            if (world.getDimensionKey() != DimensionTypes.OVERWORLD) {
+                return;
+            }
+            
+            RedeemState state = RedeemState.getOrCreate(world);
             RedeemManager.init(state);
         });
     }
