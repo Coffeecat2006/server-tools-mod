@@ -16,7 +16,7 @@ public class RedeemMod implements ModInitializer {
             if (!world.getRegistryKey().getValue().toString().endsWith("overworld")) return;
 
             RedeemState state = world.getPersistentStateManager()
-                .getOrCreate(RedeemState.TYPE);
+                .getOrCreate(RedeemState.TYPE, "redeemmod_codes");
             RedeemManager.init(state);
         });
     }
