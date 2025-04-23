@@ -107,17 +107,15 @@ public class RedeemManager {
 
             if (!r.items.isEmpty()) {
                 for (ItemStack item : r.items) {
-                    String id = item.getItem().toString();
-                    String cnt = String.valueOf(item.getCount());
-                    NbtCompound tag = item.getOrCreateNbt();
-                    String tagString = (tag != null && !tag.isEmpty()) ? tag.toString() : "";
-                    String giveCommand = "/give @s " + id + " 1" + (!tagString.isEmpty() ? " " + tagString : "");
-                    MutableText it = Text.literal("[" + cnt + "x" + id + "]")
+                    String label = item.getCount() + "x" + item.getItem().toString();
+                    MutableText it = Text.literal("[" + label + "]")
                         .formatted(Formatting.GOLD, Formatting.UNDERLINE)
                         .styled(style ->
                             style
                                 .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊獲取此物品")))
-                                .withClickEvent(new ClickEvent.RunCommand(giveCommand))
+                                .withClickEvent(new ClickEvent.RunCommand(
+                                    "/redeem_preview item " + r.code
+                                ))
                         );
                     src.sendFeedback(() -> it, false);
                 }
@@ -177,6 +175,41 @@ public class RedeemManager {
         } else {
             src.sendFeedback(() -> Text.literal("找不到禮包碼: " + code), false);
         }
+        return 1;
+    }
+
+    public static int previewItem(ServerCommandSource src, String code) {
+        ServerPlayerEntity player;
+        try {
+            player = src.getPlayer();
+        } catch (Exception e) {
+            src.sendFeedback(() -> Text.literal("僅玩家可使用此指令"), false);
+            return 0;
+        }
+
+        Redeem r = codes.get(code);
+        if (r == null) {
+            src.sendFeedback(() -> Text.literal("無此禮包碼: " + code), false);
+            return 0;
+        }
+
+        for (ItemStack item : r.items) {
+            ItemStack give = item.copy();
+            give.setCount(item.getCount());
+            player.getInventory().offerOrDrop(give);
+        }
+
+        return 1;
+    }
+
+    public static int previewText(ServerCommandSource src, String code) {
+        Redeem r = codes.get(code);
+        if (r == null) {
+            src.sendFeedback(() -> Text.literal("無此禮包碼: " + code), false);
+            return 0;
+        }
+
+        src.sendFeedback(() -> Text.literal(r.message), false);
         return 1;
     }
 }

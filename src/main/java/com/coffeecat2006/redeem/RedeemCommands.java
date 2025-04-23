@@ -42,5 +42,25 @@ public class RedeemCommands {
                     ctx.getSource(),
                     StringArgumentType.getString(ctx, "code")
                 ))));
+
+        dispatcher.register(CommandManager.literal("redeem_preview")
+        .requires(src -> src.hasPermissionLevel(2))
+        .then(CommandManager.literal("item")
+            .then(CommandManager.argument("code", StringArgumentType.word())
+                .executes(ctx -> RedeemManager.previewItem(
+                    ctx.getSource(),
+                    StringArgumentType.getString(ctx, "code")
+                ))
+            )
+        )
+        .then(CommandManager.literal("text")
+            .then(CommandManager.argument("code", StringArgumentType.word())
+                .executes(ctx -> RedeemManager.previewText(
+                    ctx.getSource(),
+                    StringArgumentType.getString(ctx, "code")
+                ))
+            )
+        )
+        );
     }
 }
