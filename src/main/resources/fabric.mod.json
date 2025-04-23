@@ -4,7 +4,7 @@
 	"version": "1.0.1",
 	"name": "RedeemCode Mod",
 	"description": "伺服器端禮包碼系統。",
-	"authors": ["coffeecat2006"],
+	"authors": ["coffeecat2006","iceice666"],
 	"license": "MIT",
 	"environment": "*",
 	"entrypoints": {
