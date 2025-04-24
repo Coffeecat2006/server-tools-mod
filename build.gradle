@@ -4,7 +4,7 @@ plugins {
 }
 
 version = '1.0.1'
-group   = 'com.example.redeem'
+group   = 'com.coffeecat2006.redeem'
 
 repositories {
     maven { url 'https://maven.fabricmc.net/' }
