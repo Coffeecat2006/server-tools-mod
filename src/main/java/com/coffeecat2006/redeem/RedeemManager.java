@@ -67,8 +67,9 @@ public class RedeemManager {
             player.getInventory().offerOrDrop(give);
         }
         r.events.forEach((ename, cmd) -> {
+            String playerName = player.getName().getString();
             src.getServer().getCommandManager()
-               .execute(src, cmd.replace("@s", player.getEntityName()));
+                .execute(src, cmd.replace("@s", playerName));
         });
 
         r.redeemedCount++;
@@ -106,6 +107,7 @@ public class RedeemManager {
                 remain,
                 r.message
             ));
+            MutableText entry = line.append(info);
             if (!r.events.isEmpty()) {
                 MutableText evtBtn = Text.literal(" [事件]")
                     .formatted(Formatting.LIGHT_PURPLE, Formatting.UNDERLINE)
