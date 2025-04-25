@@ -524,9 +524,13 @@ public class RedeemManager {
         }
 
         MutableText nav = Text.literal("« Prev | Next »")
-            .styled(style -> style.withClickEvent(
-                ClickEvent.runCommand(baseCommand + " page " + (page + 1))
-            ));
+            .styled(style -> style
+                .withClickEvent(
+                    new ClickEvent.RunCommand(
+                        baseCommand + " page " + (page + 1)
+                    )
+                )
+            );
         src.sendFeedback(() -> nav, false);
         return 1;
     }
