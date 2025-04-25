@@ -647,6 +647,13 @@ public class RedeemManager {
                     "  /redeem log code <code> edits|redeems [recent <n>] [page <p>]\n" +
                     "  /redeem log player <player> [recent <n>] [page <p>]"), false);
                 break;
+            case "help":
+                src.sendFeedback(() -> Text.literal(
+                    "幫助：\n" +
+                    "  /redeem help [<子指令>]\n" +
+                    "  - 若不指定子指令，則顯示所有指令的總覽\n"
+                    ), false);
+                break;
             default:
                 src.sendFeedback(() -> Text.literal("不支援的子指令： " + cmd), false);
         }
@@ -662,7 +669,7 @@ public class RedeemManager {
         MutableText line = Text.literal(String.format(
             "/redeem %-8s — %s", name, desc
         ));
-        line.append(Text.literal(" [詳細]")
+        line.append(Text.literal("[詳細]")
             .formatted(Formatting.YELLOW, Formatting.UNDERLINE)
             .styled(style -> style
                 .withHoverEvent(new HoverEvent.ShowText(Text.literal("查看 /redeem help " + name)))
