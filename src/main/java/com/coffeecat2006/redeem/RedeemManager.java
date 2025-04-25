@@ -513,6 +513,7 @@ public class RedeemManager {
             ServerCommandSource src,
             List<RedeemState.LogEntry> entries,
             String baseCommand,
+            int recent,
             int page
     ) {
         src.sendFeedback(() -> Text.literal("=== Redeem Logs (Page " + page + ") ==="), false);
@@ -566,6 +567,7 @@ public class RedeemManager {
             src,
             queryLogs(state.getLogs(), e -> true, recent, page),
             "/redeem log all",
+            recent,
             page
         );
     }
@@ -580,6 +582,7 @@ public class RedeemManager {
                 page
             ),
             "/redeem log code " + code + " edits",
+            recent,
             page
         );
     }
@@ -594,6 +597,7 @@ public class RedeemManager {
                 page
             ),
             "/redeem log code " + code + " redeems",
+            recent,
             page
         );
     }
@@ -608,6 +612,7 @@ public class RedeemManager {
                 page
             ),
             "/redeem log player " + player,
+            recent,
             page
         );
     }
