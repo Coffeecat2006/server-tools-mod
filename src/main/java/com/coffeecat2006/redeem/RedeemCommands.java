@@ -255,6 +255,21 @@ public class RedeemCommands {
                         )
                         )
                 );
+        
+        var help_cmd = CommandManager.literal("help")
+        .executes(ctx -> RedeemManager.helpAll(ctx.getSource()))
+        .then(CommandManager.argument("command", StringArgumentType.word())
+                .suggests((ctx, sb) -> {
+                for (String cmd : new String[]{"add","remove","list","preview","modify","log","help"}) {
+                        sb.suggest(cmd);
+                }
+                return sb.buildFuture();
+                })
+                .executes(ctx -> RedeemManager.helpCommand(
+                ctx.getSource(),
+                StringArgumentType.getString(ctx, "command")
+                ))
+        );
 
         var code = CommandManager.argument("code", StringArgumentType.word())
                 .executes(ctx -> RedeemManager.redeem(
@@ -270,6 +285,7 @@ public class RedeemCommands {
                 .then(preview_cmd)
                 .then(modify_cmd)
                 .then(log_cmd)
+                .then(help_cmd)
         );
 
 

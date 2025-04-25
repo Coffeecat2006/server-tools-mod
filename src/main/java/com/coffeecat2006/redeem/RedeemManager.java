@@ -524,12 +524,9 @@ public class RedeemManager {
         }
 
         MutableText nav = Text.literal("« Prev | Next »")
-            .styled(style -> style
-                .withClickEvent(new ClickEvent(
-                    ClickEvent.Action.RUN_COMMAND,
-                    baseCommand + " page " + (page + 1)
-                ))
-            );
+            .styled(style -> style.withClickEvent(
+                ClickEvent.runCommand(baseCommand + " page " + (page + 1))
+            ));
         src.sendFeedback(() -> nav, false);
         return 1;
     }
@@ -583,6 +580,92 @@ public class RedeemManager {
             "/redeem log player " + player,
             page
         );
+    }
+
+    public static int helpAll(ServerCommandSource src) {
+        src.sendFeedback(() -> Text.literal("=== /redeem 指令總覽 ==="), false);
+
+        addHelpLine(src, "add",      "新增一組 Code",          "/redeem add <code> \"<msg>\" <limit> <time> <rules>");
+        addHelpLine(src, "remove",   "刪除 Code",              "/redeem remove <code>");
+        addHelpLine(src, "list",     "列出所有 Code",          "/redeem list");
+        addHelpLine(src, "preview",  "預覽物品/文字/事件",      "/redeem preview <item|text|event> ...");
+        addHelpLine(src, "modify",   "修改已存在的 Code",      "/redeem modify <code> <field> ...");
+        addHelpLine(src, "log",      "查看操作日誌",            "/redeem log <all|code|player> ...");
+        addHelpLine(src, "help",     "顯示指令說明",            "/redeem help [<子指令>]");
+        return 1;
+    }
+
+    public static int helpCommand(ServerCommandSource src, String cmd) {
+        switch (cmd) {
+            case "add":
+                src.sendFeedback(() -> Text.literal(
+                    "新增一組 Code：\n" +
+                    "  /redeem add <code> \"<message>\" <limit> <time> <singleUse>\n" +
+                    "  - limit: 數字 or infinity\n" +
+                    "  - time : 分鐘 or infinity\n" +
+                    "  - singleUse: true(單次)／false(不限次)"), false);
+                break;
+            case "remove":
+                src.sendFeedback(() -> Text.literal(
+                    "刪除 Code：\n" +
+                    "  /redeem remove <code>"), false);
+                break;
+            case "list":
+                src.sendFeedback(() -> Text.literal(
+                    "列出所有 Code：\n" +
+                    "  /redeem list"), false);
+                break;
+            case "preview":
+                src.sendFeedback(() -> Text.literal(
+                    "預覽子指令：\n" +
+                    "  /redeem preview item <code>\n" +
+                    "  /redeem preview text <code>\n" +
+                    "  /redeem preview event <code> all\n" +
+                    "  /redeem preview event <code> <eventName>"), false);
+                break;
+            case "modify":
+                src.sendFeedback(() -> Text.literal(
+                    "修改 Code：\n" +
+                    "  /redeem modify <code> item <reset|transform|add>\n" +
+                    "  /redeem modify <code> code <newCode>\n" +
+                    "  /redeem modify <code> text \"<msg>\"\n" +
+                    "  /redeem modify <code> limit <num|infinity>\n" +
+                    "  /redeem modify <code> time <min|infinity>\n" +
+                    "  /redeem modify <code> rules <true|false>\n" +
+                    "  /redeem modify <code> receive_status <uuid> <true|false>\n" +
+                    "  /redeem modify <code> available <true|false>\n" +
+                    "  /redeem modify <code> event <add|remove|reset> ..."), false);
+                break;
+            case "log":
+                src.sendFeedback(() -> Text.literal(
+                    "操作日誌：\n" +
+                    "  /redeem log all [recent <n>] [page <p>]\n" +
+                    "  /redeem log code <code> edits|redeems [recent <n>] [page <p>]\n" +
+                    "  /redeem log player <player> [recent <n>] [page <p>]"), false);
+                break;
+            default:
+                src.sendFeedback(() -> Text.literal("不支援的子指令： " + cmd), false);
+        }
+        return 1;
+    }
+
+    private static void addHelpLine(
+        ServerCommandSource src,
+        String name,
+        String desc,
+        String usage
+    ) {
+        MutableText line = Text.literal(String.format(
+            "/redeem %-8s — %s", name, desc
+        ));
+        line.append(Text.literal(" [詳細]")
+            .formatted(Formatting.YELLOW, Formatting.UNDERLINE)
+            .styled(style -> style
+                .withHoverEvent(new HoverEvent.ShowText(Text.literal("查看 /redeem help " + name)))
+                .withClickEvent(new ClickEvent.RunCommand("/redeem help " + name))
+            )
+        );
+        src.sendFeedback(() -> line, false);
     }
 
     private static int feedback(ServerCommandSource src, String msg) {
