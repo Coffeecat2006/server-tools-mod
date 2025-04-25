@@ -50,7 +50,7 @@ public class RedeemManager {
         RedeemState.LogEntry le = new RedeemState.LogEntry();
         le.timestamp = Instant.now().getEpochSecond();
         le.actor = actor;
-        le.source = source;
+        le.source = (source == null ? "" : source);
         le.action = action;
         le.target = target;
         state.getLogs().add(le);
