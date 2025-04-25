@@ -71,6 +71,11 @@
 # 預覽文字
 /redeem preview text <code>
 
+# 預覽事件
+/redeem preview event <code> all
+
+/redeem preview event <code> <eventName>
+
 ### 修改現有 Code
 管理員可用 /redeem modify 指令動態調整已存在的 Code。
 

@@ -173,6 +173,88 @@ public class RedeemCommands {
                 )
         );
 
+        var log_cmd = CommandManager.literal("log")
+                .requires(src -> src.hasPermissionLevel(2))
+                .then(CommandManager.literal("all")
+                        .executes(ctx -> RedeemManager.logAll(ctx.getSource(), 0, 1))
+                        .then(CommandManager.argument("recent", IntegerArgumentType.integer(1))
+                        .executes(ctx -> RedeemManager.logAll(
+                                ctx.getSource(),
+                                IntegerArgumentType.getInteger(ctx, "recent"),
+                                1
+                        ))
+                        .then(CommandManager.argument("page", IntegerArgumentType.integer(1))
+                                .executes(ctx -> RedeemManager.logAll(
+                                ctx.getSource(),
+                                IntegerArgumentType.getInteger(ctx, "recent"),
+                                IntegerArgumentType.getInteger(ctx, "page")
+                                ))
+                        )
+                        )
+                )
+                .then(CommandManager.literal("code")
+                        .then(CommandManager.argument("code", StringArgumentType.word())
+                        .then(CommandManager.literal("edits")
+                                .executes(ctx -> RedeemManager.logEdits(ctx.getSource(),
+                                StringArgumentType.getString(ctx, "code"), 0, 1))
+                                .then(CommandManager.argument("recent", IntegerArgumentType.integer(1))
+                                .executes(ctx -> RedeemManager.logEdits(ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "code"),
+                                        IntegerArgumentType.getInteger(ctx, "recent"), 1
+                                ))
+                                .then(CommandManager.argument("page", IntegerArgumentType.integer(1))
+                                        .executes(ctx -> RedeemManager.logEdits(ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "code"),
+                                        IntegerArgumentType.getInteger(ctx, "recent"),
+                                        IntegerArgumentType.getInteger(ctx, "page")
+                                        ))
+                                )
+                                )
+                        )
+                        .then(CommandManager.literal("redeems")
+                                .executes(ctx -> RedeemManager.logRedeems(ctx.getSource(),
+                                StringArgumentType.getString(ctx, "code"), 0, 1))
+                                .then(CommandManager.argument("recent", IntegerArgumentType.integer(1))
+                                .executes(ctx -> RedeemManager.logEdits(ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "code"),
+                                        IntegerArgumentType.getInteger(ctx, "recent"), 1
+                                ))
+                                .then(CommandManager.argument("page", IntegerArgumentType.integer(1))
+                                        .executes(ctx -> RedeemManager.logEdits(ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "code"),
+                                        IntegerArgumentType.getInteger(ctx, "recent"),
+                                        IntegerArgumentType.getInteger(ctx, "page")
+                                        ))
+                                )
+                                )
+                        )
+                        )
+                )
+                .then(CommandManager.literal("player")
+                        .then(CommandManager.argument("player", StringArgumentType.word())
+                        .executes(ctx -> RedeemManager.logPlayer(
+                                ctx.getSource(),
+                                StringArgumentType.getString(ctx, "player"),
+                                0, 1
+                        ))
+                        .then(CommandManager.argument("recent", IntegerArgumentType.integer(1))
+                                .executes(ctx -> RedeemManager.logPlayer(
+                                ctx.getSource(),
+                                StringArgumentType.getString(ctx, "player"),
+                                IntegerArgumentType.getInteger(ctx, "recent"), 1
+                                ))
+                                .then(CommandManager.argument("page", IntegerArgumentType.integer(1))
+                                .executes(ctx -> RedeemManager.logPlayer(
+                                        ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "player"),
+                                        IntegerArgumentType.getInteger(ctx, "recent"),
+                                        IntegerArgumentType.getInteger(ctx, "page")
+                                ))
+                                )
+                        )
+                        )
+                );
+
         var code = CommandManager.argument("code", StringArgumentType.word())
                 .executes(ctx -> RedeemManager.redeem(
                         ctx.getSource(),
@@ -186,6 +268,7 @@ public class RedeemCommands {
                 .then(list_cmd)
                 .then(preview_cmd)
                 .then(modify_cmd)
+                .then(log_cmd)
         );
 
 

@@ -12,7 +12,12 @@ import net.minecraft.util.Formatting;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class RedeemManager {
     private static RedeemState state;
@@ -24,12 +29,32 @@ public class RedeemManager {
         public int limit;
         public long expiryEpoch;
         public boolean singleUse;
+        public boolean available = true;
         public List<ItemStack> items;
         public int redeemedCount;
         public Set<UUID> usedPlayers = new HashSet<>();
-        public boolean available = true;
         public Map<String, String> events = new HashMap<>();
-        public Instant getExpiry() { return Instant.ofEpochSecond(expiryEpoch); }
+
+        public Instant getExpiry() {
+            return Instant.ofEpochSecond(expiryEpoch);
+        }
+    }
+
+    private static void writeLog(
+            ServerCommandSource src,
+            String actor,
+            String source,
+            String action,
+            String target
+    ) {
+        RedeemState.LogEntry le = new RedeemState.LogEntry();
+        le.timestamp = Instant.now().getEpochSecond();
+        le.actor = actor;
+        le.source = source;
+        le.action = action;
+        le.target = target;
+        state.getLogs().add(le);
+        state.markDirty();
     }
 
     public static void init(RedeemState st) {
@@ -39,55 +64,67 @@ public class RedeemManager {
 
     public static int redeem(ServerCommandSource src, String code) {
         ServerPlayerEntity player;
-        try { player = src.getPlayer(); }
-        catch (Exception e) {
+        try {
+            player = src.getPlayer();
+        } catch (Exception e) {
             src.sendFeedback(() -> Text.literal("僅玩家可使用此指令"), false);
             return 0;
         }
+
         Redeem r = codes.get(code);
         if (r == null || !r.available) {
             src.sendFeedback(() -> Text.literal("無此禮包碼: " + code), false);
             return 0;
         }
+
         if (r.expiryEpoch != Long.MAX_VALUE && Instant.now().isAfter(r.getExpiry())) {
             src.sendFeedback(() -> Text.literal("此禮包碼已過期"), false);
+            writeLog(src, player.getName().getString(), null, "試圖領取禮包碼但過期了", code);
             return 0;
         }
+
         if (r.limit >= 0 && r.redeemedCount >= r.limit) {
             src.sendFeedback(() -> Text.literal("此禮包碼已達使用上限"), false);
+            writeLog(src, player.getName().getString(), null, "試圖領取禮包碼但已達使用上限", code);
             return 0;
         }
+
         if (r.singleUse && r.usedPlayers.contains(player.getUuid())) {
             src.sendFeedback(() -> Text.literal("你已經領取過此禮包碼"), false);
+            writeLog(src, player.getName().getString(), null, "試圖重複領取禮包碼", code);
             return 0;
         }
+
         for (ItemStack item : r.items) {
             ItemStack give = item.copy();
             give.setCount(item.getCount());
             player.getInventory().offerOrDrop(give);
         }
+
         r.events.forEach((ename, cmd) -> {
             String playerName = player.getName().getString();
-            src.getServer()
-               .getCommandManager()
-               .executeWithPrefix(src, cmd.replace("@s", playerName));
-        });        
+            src.getServer().getCommandManager()
+               .execute(src, cmd.replace("@s", playerName));
+        });
 
         r.redeemedCount++;
         r.usedPlayers.add(player.getUuid());
         state.markDirty();
+
         src.sendFeedback(() -> Text.literal(r.message), false);
+        writeLog(src, player.getName().getString(), null, "領取了禮包碼", code);
         return 1;
     }
 
     public static int list(ServerCommandSource src) {
         src.sendFeedback(() -> Text.literal("=== Redeem Codes ==="), false);
+
         for (Redeem r : codes.values()) {
             String remain;
             if (r.expiryEpoch == Long.MAX_VALUE) {
                 remain = "永不過期";
             } else {
-                Instant expiry = Instant.ofEpochSecond(r.expiryEpoch);
+                Instant expiry = r.getExpiry();
                 if (Instant.now().isAfter(expiry)) {
                     remain = "已過期";
                 } else {
@@ -95,12 +132,14 @@ public class RedeemManager {
                     remain = mins + " 分鐘";
                 }
             }
+
             MutableText line = Text.literal(r.code)
                 .formatted(Formatting.AQUA, Formatting.UNDERLINE)
                 .styled(style -> style
                     .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
                     .withClickEvent(new ClickEvent.CopyToClipboard(r.code))
                 );
+
             MutableText info = Text.literal(String.format(
                 " [%d/%s] 剩餘: %s 訊息: %s",
                 r.redeemedCount,
@@ -108,17 +147,19 @@ public class RedeemManager {
                 remain,
                 r.message
             ));
+
             MutableText entry = line.append(info);
             if (!r.events.isEmpty()) {
-                MutableText evtBtn = Text.literal(" [事件]")
-                    .formatted(Formatting.LIGHT_PURPLE, Formatting.UNDERLINE)
-                    .styled(style -> style
-                        .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看此 code 的所有事件")))
-                        .withClickEvent(new ClickEvent.RunCommand("/redeem preview event " + r.code + " all"))
-                    );
-                entry.append(evtBtn);
+                entry.append(
+                    Text.literal(" [事件]")
+                        .formatted(Formatting.LIGHT_PURPLE, Formatting.UNDERLINE)
+                        .styled(style -> style
+                            .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看事件")))
+                            .withClickEvent(new ClickEvent.RunCommand("/redeem preview event " + r.code + " all"))
+                        )
+                );
             }
-    
+
             src.sendFeedback(() -> entry, false);
 
             src.sendFeedback(() -> line.append(info), false);
@@ -138,11 +179,19 @@ public class RedeemManager {
         return 1;
     }
 
-    public static int add(ServerCommandSource src, String code, String text, String limitStr, String timeStr, boolean singleUse) {
+    public static int add(
+            ServerCommandSource src,
+            String code,
+            String text,
+            String limitStr,
+            String timeStr,
+            boolean singleUse
+    ) {
         if (codes.containsKey(code)) {
             src.sendFeedback(() -> Text.literal("此禮包碼已存在"), false);
             return 0;
         }
+
         Redeem r = new Redeem();
         r.code = code.equalsIgnoreCase("random")
             ? UUID.randomUUID().toString().replace("-", "").substring(0, new Random().nextInt(5) + 12)
@@ -179,17 +228,24 @@ public class RedeemManager {
         } catch (Exception e) {
             r.items = new ArrayList<>();
         }
+
         codes.put(r.code, r);
         state.markDirty();
-        MutableText ok = Text.literal("已建立: ").append(
-            Text.literal(r.code)
-                .formatted(Formatting.AQUA, Formatting.UNDERLINE)
-                .styled(style -> style
-                    .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
-                    .withClickEvent(new ClickEvent.CopyToClipboard(r.code))
-                )
+
+        src.sendFeedback(() ->
+            Text.literal("已建立: ")
+                .append(
+                    Text.literal(r.code)
+                        .formatted(Formatting.AQUA, Formatting.UNDERLINE)
+                        .styled(style -> style
+                            .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊複製")))
+                            .withClickEvent(new ClickEvent.CopyToClipboard(r.code))
+                        )
+                ),
+            false
         );
-        src.sendFeedback(() -> ok, false);
+
+        writeLog(src, "管理員", src.getName().getString(), "新增了禮包碼 " + code, r.code);
         return 1;
     }
 
@@ -197,6 +253,7 @@ public class RedeemManager {
         if (codes.remove(code) != null) {
             state.markDirty();
             src.sendFeedback(() -> Text.literal("已移除禮包碼: " + code), false);
+            writeLog(src, "管理員", src.getName().getString(), "移除了禮包碼 " + code, code);
         } else {
             src.sendFeedback(() -> Text.literal("找不到禮包碼: " + code), false);
         }
@@ -211,16 +268,19 @@ public class RedeemManager {
             src.sendFeedback(() -> Text.literal("僅玩家可使用此指令"), false);
             return 0;
         }
+
         Redeem r = codes.get(code);
         if (r == null) {
             src.sendFeedback(() -> Text.literal("無此禮包碼: " + code), false);
             return 0;
         }
+
         for (ItemStack item : r.items) {
             ItemStack give = item.copy();
             give.setCount(item.getCount());
             player.getInventory().offerOrDrop(give);
         }
+
         return 1;
     }
 
@@ -230,6 +290,7 @@ public class RedeemManager {
             src.sendFeedback(() -> Text.literal("無此禮包碼: " + code), false);
             return 0;
         }
+
         src.sendFeedback(() -> Text.literal(r.message), false);
         return 1;
     }
@@ -273,6 +334,7 @@ public class RedeemManager {
                 );
             src.sendFeedback(() -> line, false);
         });
+
         return 1;
     }
 
@@ -281,6 +343,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.items.clear();
         state.markDirty();
+        writeLog(src, "管理員", src.getName().getString(), "重製禮包碼 " + code + " 物品", code);
         return feedback(src, "已重置物品");
     }
 
@@ -296,6 +359,7 @@ public class RedeemManager {
             r.items.clear();
         }
         state.markDirty();
+        writeLog(src, "管理員", src.getName().getString(), "將禮包碼 " + code + " 物品換為副手物品", code);
         return feedback(src, "已將物品轉換為副手物品");
     }
 
@@ -307,6 +371,7 @@ public class RedeemManager {
             if (off.getItem() != Items.AIR) r.items.add(off.copy());
         } catch (Exception ignored) {}
         state.markDirty();
+        writeLog(src, "管理員", src.getName().getString(), "將禮包碼 " + code + " 物品新增副手物品", code);
         return feedback(src, "已新增副手物品");
     }
 
@@ -317,6 +382,8 @@ public class RedeemManager {
         r.code = newCode;
         codes.put(newCode, r);
         state.markDirty();
+        writeLog(src, "管理員", src.getName().getString(), "將禮包碼 " + code + " 變更為 " + newCode, newCode);
+        writeLog(src, "管理員", src.getName().getString(), "將禮包碼 " + code + " 變更為 " + newCode, code);
         return feedback(src, "已更新 code 為: " + newCode);
     }
 
@@ -325,6 +392,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.message = text;
         state.markDirty();
+        writeLog(src, "管理員", src.getName().getString(), "更新禮包碼 " + code + " 訊息文字", code);
         return feedback(src, "已更新訊息文字");
     }
 
@@ -337,6 +405,7 @@ public class RedeemManager {
             return feedback(src, "limit 必須是數字或 infinity");
         }
         state.markDirty();
+        writeLog(src, "管理員", src.getName().getString(), "更新禮包碼 " + code + " 使用上限", code);
         return feedback(src, "已更新使用上限");
     }
 
@@ -351,6 +420,7 @@ public class RedeemManager {
             return feedback(src, "time 必須是數字或 infinity");
         }
         state.markDirty();
+        writeLog(src, "管理員", src.getName().getString(), "更新禮包碼 " + code + " 過期時間", code);
         return feedback(src, "已更新過期時間");
     }
 
@@ -359,6 +429,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.singleUse = singleUse;
         state.markDirty();
+        writeLog(src, "管理員", src.getName().getString(), "更新禮包碼 " + code + " 單次領取規則", code);
         return feedback(src, "已更新單次領取規則");
     }
 
@@ -373,6 +444,7 @@ public class RedeemManager {
             return feedback(src, "playerId 格式錯誤");
         }
         state.markDirty();
+        writeLog(src, "管理員", src.getName().getString(), "更新玩家 " + playerId + " 於 " + code + "的領取狀態", code);
         return feedback(src, "已更新該玩家的領取狀態");
     }
 
@@ -381,6 +453,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.available = available;
         state.markDirty();
+        writeLog(src, "管理員", src.getName().getString(), available ? "設為可用禮包碼" : "隱藏禮包碼" + code, code);
         return feedback(src, available ? "已設為可用" : "已隱藏該禮包碼");
     }
 
@@ -389,6 +462,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.events.put(name, cmd);
         state.markDirty();
+        writeLog(src, "管理員", src.getName().getString(), "新增禮包碼 " + code + " 事件 " + name, code);
         return feedback(src, "已新增事件: " + name);
     }
 
@@ -397,6 +471,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.events.remove(name);
         state.markDirty();
+        writeLog(src, "管理員", src.getName().getString(), "移除禮包碼 " + code + " 事件 " + name, code);
         return feedback(src, "已移除事件: " + name);
     }
 
@@ -405,7 +480,109 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.events.clear();
         state.markDirty();
+        writeLog(src, "管理員", src.getName().getString(), "清空禮包碼 " + code + " 的所有事件", code);
         return feedback(src, "已清空所有事件");
+    }
+
+    private static List<RedeemState.LogEntry> queryLogs(
+            List<RedeemState.LogEntry> all,
+            Predicate<RedeemState.LogEntry> filter,
+            int recent,
+            int page
+    ) {
+        List<RedeemState.LogEntry> list = all.stream()
+            .filter(filter)
+            .collect(Collectors.toList());
+        if (recent > 0 && list.size() > recent) {
+            list = list.subList(list.size() - recent, list.size());
+        }
+        int perPage = 10;
+        int from = Math.min(list.size(), (page - 1) * perPage);
+        int to = Math.min(list.size(), from + perPage);
+        return list.subList(from, to);
+    }
+
+    private static int showLogList(
+            ServerCommandSource src,
+            List<RedeemState.LogEntry> entries,
+            String baseCommand,
+            int page
+    ) {
+        src.sendFeedback(() -> Text.literal("=== Redeem Logs (Page " + page + ") ==="), false);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        for (RedeemState.LogEntry le : entries) {
+            String time = LocalDateTime.ofEpochSecond(le.timestamp, 0, ZoneOffset.UTC).format(fmt);
+            MutableText line = Text.literal("[" + time + "] ");
+            if (le.source != null && !le.source.isEmpty()) {
+                line.append(Text.literal(le.actor + " " + le.source + " "));
+            } else {
+                line.append(Text.literal(le.actor + " "));
+            }
+            String tgt = le.target != null ? " " + le.target : "";
+            line.append(Text.literal(le.action + tgt));
+            src.sendFeedback(() -> line, false);
+        }
+
+        MutableText nav = Text.literal("« Prev | Next »")
+            .styled(style -> style
+                .withClickEvent(new ClickEvent(
+                    ClickEvent.Action.RUN_COMMAND,
+                    baseCommand + " page " + (page + 1)
+                ))
+            );
+        src.sendFeedback(() -> nav, false);
+        return 1;
+    }
+
+    public static int logAll(ServerCommandSource src, int recent, int page) {
+        return showLogList(
+            src,
+            queryLogs(state.getLogs(), e -> true, recent, page),
+            "/redeem log all",
+            page
+        );
+    }
+
+    public static int logEdits(ServerCommandSource src, String code, int recent, int page) {
+        return showLogList(
+            src,
+            queryLogs(
+                state.getLogs(),
+                e -> e.target.equals(code) && !e.action.contains("領取"),
+                recent,
+                page
+            ),
+            "/redeem log code " + code + " edits",
+            page
+        );
+    }
+
+    public static int logRedeems(ServerCommandSource src, String code, int recent, int page) {
+        return showLogList(
+            src,
+            queryLogs(
+                state.getLogs(),
+                e -> e.target.equals(code) && e.action.contains("領取"),
+                recent,
+                page
+            ),
+            "/redeem log code " + code + " redeems",
+            page
+        );
+    }
+
+    public static int logPlayer(ServerCommandSource src, String player, int recent, int page) {
+        return showLogList(
+            src,
+            queryLogs(
+                state.getLogs(),
+                e -> e.actor.equals(player),
+                recent,
+                page
+            ),
+            "/redeem log player " + player,
+            page
+        );
     }
 
     private static int feedback(ServerCommandSource src, String msg) {
