@@ -162,7 +162,6 @@ public class RedeemManager {
 
             src.sendFeedback(() -> entry, false);
 
-            src.sendFeedback(() -> line.append(info), false);
             if (!r.items.isEmpty()) {
                 for (ItemStack item : r.items) {
                     String label = item.getCount() + "x" + item.getItem().toString();
@@ -170,7 +169,7 @@ public class RedeemManager {
                         .formatted(Formatting.GOLD, Formatting.UNDERLINE)
                         .styled(style -> style
                             .withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊獲取此物品")))
-                            .withClickEvent(new ClickEvent.RunCommand("/redeem_preview item " + r.code))
+                            .withClickEvent(new ClickEvent.RunCommand("/redeem preview item " + r.code))
                         );
                     src.sendFeedback(() -> it, false);
                 }
@@ -382,7 +381,7 @@ public class RedeemManager {
         r.code = newCode;
         codes.put(newCode, r);
         state.markDirty();
-        writeLog(src, "管理員", src.getName().getString(), "將禮包碼 " + code + " 變更為 " + newCode, newCode);
+        writeLog(src, "管理員", src.getName().getString(), "禮包碼由 " + code + " 變更為 " + newCode, newCode);
         writeLog(src, "管理員", src.getName().getString(), "將禮包碼 " + code + " 變更為 " + newCode, code);
         return feedback(src, "已更新 code 為: " + newCode);
     }
@@ -453,7 +452,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.available = available;
         state.markDirty();
-        writeLog(src, "管理員", src.getName().getString(), available ? "設為可用禮包碼" : "隱藏禮包碼" + code, code);
+        writeLog(src, "管理員", src.getName().getString(), available ? "設為可用禮包碼" : "隱藏禮包碼 " + code, code);
         return feedback(src, available ? "已設為可用" : "已隱藏該禮包碼");
     }
 

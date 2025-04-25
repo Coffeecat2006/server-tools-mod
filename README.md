@@ -46,9 +46,9 @@
 
 ## 指令用法
 
-```markdown
 ### 新增 / 移除 / 列表
 
+```shell
 # 新增一組 Code
 /redeem add <code> "<message>" <limit> <time> <singleUse>
 # 例如：只限領一次、24 小時過期
@@ -59,12 +59,18 @@
 
 # 列出所有 Code（管理員專用）
 /redeem list
+```
 
 ### 兌換
+
+```shell
 # 玩家輸入 Code
 /redeem <code>
+```
 
 ### 預覽（管理員專用）
+
+```shell
 # 預覽物品
 /redeem preview item <code>
 
@@ -75,35 +81,53 @@
 /redeem preview event <code> all
 
 /redeem preview event <code> <eventName>
+```
 
 ### 修改現有 Code
-管理員可用 /redeem modify 指令動態調整已存在的 Code。
+管理員可用 `/redeem modify` 指令動態調整已存在的 Code。
 
+```shell
 /redeem modify <code> <field> [args...]
-### 物品
-- **item reset**: 清空該 Code 的物品列表  
-- **item transform**: 將物品列表替換為管理員當前副手持物  
-- **item add**: 在現有列表後追加管理員當前副手持物  
-
-### 欄位
-- **code <newCode>**: 重新命名 Code  
-- **text "<newMessage>"**: 更新領取後顯示的文字  
-- **limit <number\|infinity>**: 設定總領取次數上限（-1 表示無限）  
-- **time <minutes\|infinity>**: 設定過期時間（分），或 `infinity`  
-- **rules <true\|false>**: 單／多次領取規則（`true` = 單次每人）  
-- **receive_status <playerUUID> <true\|false>**: 手動標記某玩家是否已領取  
-- **available <true\|false>**: 顯示（`true`）或隱藏（`false`）此 Code  
-
-### 事件
-- **event add <eventName> <command…>**  
-  新增一個領取時執行的伺服器指令，`@s` 解析為領取玩家  
-  例：  
-
-例：/redeem_modify VIP123 event add greet title @s title "歡迎 VIP"
-
-- **event remove <eventName>**: 移除指定事件  
-- **event reset**: 清空所有事件
 ```
+
+#### 物品
+- `item reset`：清空該 Code 的物品列表  
+- `item transform`：將物品列表替換為管理員當前副手持物  
+- `item add`：在現有列表後追加管理員當前副手持物  
+
+#### 欄位
+- `code <newCode>`：重新命名 Code  
+- `text "<newMessage>"`：更新領取後顯示的文字  
+- `limit <number|infinity>`：設定總領取次數上限（-1 表示無限）  
+- `time <minutes|infinity>`：設定過期時間（分），或 `infinity`  
+- `rules <true|false>`：單／多次領取規則（`true` = 單次每人）  
+- `receive_status <playerUUID> <true|false>`：手動標記某玩家是否已領取  
+- `available <true|false>`：顯示（`true`）或隱藏（`false`）此 Code  
+
+#### 事件
+- `event add <eventName> <command…>`：新增一個領取時執行的伺服器指令，`@s` 解析為領取玩家  
+  例： `/redeem modify VIP123 event add greet title @s title "歡迎 VIP"`  
+- `event remove <eventName>`：移除指定事件  
+- `event reset`：清空所有事件  
+
+### 查閱日誌
+```shell
+# 顯示所有日誌
+/redeem log all [recent <n>] [page <p>]
+
+# 查詢指定 Code 的編輯紀錄
+/redeem log code <code> edits [recent <n>] [page <p>]
+
+# 查詢指定 Code 的領取紀錄
+/redeem log code <code> redeems [recent <n>] [page <p>]
+
+# 查詢指定玩家的所有操作紀錄
+/redeem log player <player> [recent <n>] [page <p>]
+```
+
+---
+
 ## 授權
-本模組採 MIT License
-詳見 LICENSE 文件。
+
+本模組採 MIT License，詳見 LICENSE 文件。
+
