@@ -460,7 +460,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.available = available;
         state.markDirty();
-        writeLog(src, "管理員", src.getName(), available ? "設為可用禮包碼" : "隱藏禮包碼 " + code, code);
+        writeLog(src, "管理員", src.getName(), available ? "設為可用禮包碼: " : "隱藏禮包碼: ", code);
         return feedback(src, available ? "已設為可用" : "已隱藏該禮包碼");
     }
 
@@ -469,7 +469,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.events.put(name, cmd);
         state.markDirty();
-        writeLog(src, "管理員", src.getName(), "新增禮包碼 " + code + " 事件 " + name, code);
+        writeLog(src, "管理員", src.getName(), "新增事件 " + name + " 禮包碼: ", code);
         return feedback(src, "已新增事件: " + name);
     }
 
@@ -478,7 +478,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.events.remove(name);
         state.markDirty();
-        writeLog(src, "管理員", src.getName(), "移除禮包碼 " + code + " 事件 " + name, code);
+        writeLog(src, "管理員", src.getName(), "移除事件 " + name + " 禮包碼: ", code);
         return feedback(src, "已移除事件: " + name);
     }
 
@@ -487,7 +487,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.events.clear();
         state.markDirty();
-        writeLog(src, "管理員", src.getName(), "清空禮包碼 " + code + " 的所有事件", code);
+        writeLog(src, "管理員", src.getName(), "清空禮包碼的所有事件 禮包碼: ", code);
         return feedback(src, "已清空所有事件");
     }
 
@@ -530,14 +530,33 @@ public class RedeemManager {
             src.sendFeedback(() -> line, false);
         }
 
-        MutableText nav = Text.literal("« Prev | Next »")
+        String recentPart = recent > 0 ? " recent " + recent : "";
+
+        String prevCmd = page > 1
+            ? baseCommand + recentPart + " page " + (page - 1)
+            : baseCommand + recentPart + " page " + page;
+
+        MutableText prev = Text.literal("« Prev")
+            .formatted(Formatting.GRAY, Formatting.UNDERLINE)
             .styled(style -> style
-                .withClickEvent(
-                    new ClickEvent.RunCommand(
-                        baseCommand + " 9999 " + (page + 1)
-                    )
-                )
+                .withClickEvent(new ClickEvent.RunCommand(prevCmd))
             );
+
+        String nextCmd = entries.size() < 10
+            ? baseCommand + recentPart + " page " + page
+            : baseCommand + recentPart + " page " + (page + 1);
+
+        MutableText next = Text.literal("Next »")
+            .formatted(Formatting.GRAY, Formatting.UNDERLINE)
+            .styled(style -> style
+                .withClickEvent(new ClickEvent.RunCommand(nextCmd))
+            );
+
+        MutableText nav = Text.literal("")
+            .append(prev)
+            .append(Text.literal(" | ").formatted(Formatting.WHITE))
+            .append(next);
+
         src.sendFeedback(() -> nav, false);
         return 1;
     }
