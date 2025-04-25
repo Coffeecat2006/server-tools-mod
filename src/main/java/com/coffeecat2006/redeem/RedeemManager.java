@@ -103,6 +103,7 @@ public class RedeemManager {
 
         r.events.forEach((ename, cmd) -> {
             String playerName = player.getName().getString();
+            src.getServer()
             .getCommandManager()
                 .executeWithPrefix(src, cmd.replace("@s", playerName));
          });
