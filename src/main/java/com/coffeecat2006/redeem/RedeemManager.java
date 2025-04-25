@@ -534,8 +534,8 @@ public class RedeemManager {
         String recentPart = recent > 0 ? " recent " + recent : "";
 
         String prevCmd = page > 1
-            ? baseCommand + recentPart + " page " + (page - 1)
-            : baseCommand + recentPart + " page " + page;
+            ? baseCommand + recentPart + " " + (page - 1)
+            : baseCommand + recentPart + " " + page;
 
         MutableText prev = Text.literal("« Prev")
             .formatted(Formatting.GRAY, Formatting.UNDERLINE)
@@ -544,8 +544,8 @@ public class RedeemManager {
             );
 
         String nextCmd = entries.size() < 10
-            ? baseCommand + recentPart + " page " + page
-            : baseCommand + recentPart + " page " + (page + 1);
+            ? baseCommand + recentPart + " " + page
+            : baseCommand + recentPart + " " + (page + 1);
 
         MutableText next = Text.literal("Next »")
             .formatted(Formatting.GRAY, Formatting.UNDERLINE)
