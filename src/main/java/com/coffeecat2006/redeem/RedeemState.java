@@ -40,7 +40,7 @@ public class RedeemState extends PersistentState {
                      list -> { Set<UUID> s = new HashSet<>(); for (String u: list) s.add(UUID.fromString(u)); return s; },
                      set  -> { List<String> ls = new ArrayList<>(); for (UUID u: set) ls.add(u.toString()); return ls; }
                  )
-                 .fieldOf("usedPlayers").forGetter(r -> r.usedPlayers)
+                 .fieldOf("usedPlayers").forGetter(r -> r.usedPlayers),
             Codec.unboundedMap(Codec.STRING, Codec.STRING)
                  .fieldOf("events").forGetter(r -> r.events)
         )
