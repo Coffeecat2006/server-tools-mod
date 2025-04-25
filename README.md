@@ -46,6 +46,7 @@
 
 ## 指令用法
 
+```markdown
 ### 新增 / 移除 / 列表
 
 # 新增一組 Code
@@ -96,8 +97,8 @@
 例：/redeem_modify VIP123 event add greet title @s title "歡迎 VIP"
 
 - **event remove <eventName>**: 移除指定事件  
-- **event reset**: 清空所有事件  
-
+- **event reset**: 清空所有事件
+```
 ## 授權
 本模組採 MIT License
 詳見 LICENSE 文件。
