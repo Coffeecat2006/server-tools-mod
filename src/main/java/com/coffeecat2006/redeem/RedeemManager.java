@@ -103,9 +103,9 @@ public class RedeemManager {
 
         r.events.forEach((ename, cmd) -> {
             String playerName = player.getName().getString();
-            src.getServer().getCommandManager()
-               .execute(src, cmd.replace("@s", playerName));
-        });
+            .getCommandManager()
+                .executeWithPrefix(src, cmd.replace("@s", playerName));
+         });
 
         r.redeemedCount++;
         r.usedPlayers.add(player.getUuid());
@@ -244,7 +244,7 @@ public class RedeemManager {
             false
         );
 
-        writeLog(src, "管理員", src.getName().getString(), "新增了禮包碼 " + code, r.code);
+        writeLog(src, "管理員", src.getName(), "新增了禮包碼 " + code, r.code);
         return 1;
     }
 
@@ -252,7 +252,7 @@ public class RedeemManager {
         if (codes.remove(code) != null) {
             state.markDirty();
             src.sendFeedback(() -> Text.literal("已移除禮包碼: " + code), false);
-            writeLog(src, "管理員", src.getName().getString(), "移除了禮包碼 " + code, code);
+            writeLog(src, "管理員", src.getName(), "移除了禮包碼 " + code, code);
         } else {
             src.sendFeedback(() -> Text.literal("找不到禮包碼: " + code), false);
         }
@@ -342,7 +342,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.items.clear();
         state.markDirty();
-        writeLog(src, "管理員", src.getName().getString(), "重製禮包碼 " + code + " 物品", code);
+        writeLog(src, "管理員", src.getName(), "重製禮包碼 " + code + " 物品", code);
         return feedback(src, "已重置物品");
     }
 
@@ -358,7 +358,7 @@ public class RedeemManager {
             r.items.clear();
         }
         state.markDirty();
-        writeLog(src, "管理員", src.getName().getString(), "將禮包碼 " + code + " 物品換為副手物品", code);
+        writeLog(src, "管理員", src.getName(), "將禮包碼 " + code + " 物品換為副手物品", code);
         return feedback(src, "已將物品轉換為副手物品");
     }
 
@@ -370,7 +370,7 @@ public class RedeemManager {
             if (off.getItem() != Items.AIR) r.items.add(off.copy());
         } catch (Exception ignored) {}
         state.markDirty();
-        writeLog(src, "管理員", src.getName().getString(), "將禮包碼 " + code + " 物品新增副手物品", code);
+        writeLog(src, "管理員", src.getName(), "將禮包碼 " + code + " 物品新增副手物品", code);
         return feedback(src, "已新增副手物品");
     }
 
@@ -381,8 +381,8 @@ public class RedeemManager {
         r.code = newCode;
         codes.put(newCode, r);
         state.markDirty();
-        writeLog(src, "管理員", src.getName().getString(), "禮包碼由 " + code + " 變更為 " + newCode, newCode);
-        writeLog(src, "管理員", src.getName().getString(), "將禮包碼 " + code + " 變更為 " + newCode, code);
+        writeLog(src, "管理員", src.getName(), "禮包碼由 " + code + " 變更為 " + newCode, newCode);
+        writeLog(src, "管理員", src.getName(), "將禮包碼 " + code + " 變更為 " + newCode, code);
         return feedback(src, "已更新 code 為: " + newCode);
     }
 
@@ -391,7 +391,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.message = text;
         state.markDirty();
-        writeLog(src, "管理員", src.getName().getString(), "更新禮包碼 " + code + " 訊息文字", code);
+        writeLog(src, "管理員", src.getName(), "更新禮包碼 " + code + " 訊息文字", code);
         return feedback(src, "已更新訊息文字");
     }
 
@@ -404,7 +404,7 @@ public class RedeemManager {
             return feedback(src, "limit 必須是數字或 infinity");
         }
         state.markDirty();
-        writeLog(src, "管理員", src.getName().getString(), "更新禮包碼 " + code + " 使用上限", code);
+        writeLog(src, "管理員", src.getName(), "更新禮包碼 " + code + " 使用上限", code);
         return feedback(src, "已更新使用上限");
     }
 
@@ -419,7 +419,7 @@ public class RedeemManager {
             return feedback(src, "time 必須是數字或 infinity");
         }
         state.markDirty();
-        writeLog(src, "管理員", src.getName().getString(), "更新禮包碼 " + code + " 過期時間", code);
+        writeLog(src, "管理員", src.getName(), "更新禮包碼 " + code + " 過期時間", code);
         return feedback(src, "已更新過期時間");
     }
 
@@ -428,7 +428,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.singleUse = singleUse;
         state.markDirty();
-        writeLog(src, "管理員", src.getName().getString(), "更新禮包碼 " + code + " 單次領取規則", code);
+        writeLog(src, "管理員", src.getName(), "更新禮包碼 " + code + " 單次領取規則", code);
         return feedback(src, "已更新單次領取規則");
     }
 
@@ -443,7 +443,7 @@ public class RedeemManager {
             return feedback(src, "playerId 格式錯誤");
         }
         state.markDirty();
-        writeLog(src, "管理員", src.getName().getString(), "更新玩家 " + playerId + " 於 " + code + "的領取狀態", code);
+        writeLog(src, "管理員", src.getName(), "更新玩家 " + playerId + " 於 " + code + "的領取狀態", code);
         return feedback(src, "已更新該玩家的領取狀態");
     }
 
@@ -452,7 +452,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.available = available;
         state.markDirty();
-        writeLog(src, "管理員", src.getName().getString(), available ? "設為可用禮包碼" : "隱藏禮包碼 " + code, code);
+        writeLog(src, "管理員", src.getName(), available ? "設為可用禮包碼" : "隱藏禮包碼 " + code, code);
         return feedback(src, available ? "已設為可用" : "已隱藏該禮包碼");
     }
 
@@ -461,7 +461,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.events.put(name, cmd);
         state.markDirty();
-        writeLog(src, "管理員", src.getName().getString(), "新增禮包碼 " + code + " 事件 " + name, code);
+        writeLog(src, "管理員", src.getName(), "新增禮包碼 " + code + " 事件 " + name, code);
         return feedback(src, "已新增事件: " + name);
     }
 
@@ -470,7 +470,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.events.remove(name);
         state.markDirty();
-        writeLog(src, "管理員", src.getName().getString(), "移除禮包碼 " + code + " 事件 " + name, code);
+        writeLog(src, "管理員", src.getName(), "移除禮包碼 " + code + " 事件 " + name, code);
         return feedback(src, "已移除事件: " + name);
     }
 
@@ -479,7 +479,7 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         r.events.clear();
         state.markDirty();
-        writeLog(src, "管理員", src.getName().getString(), "清空禮包碼 " + code + " 的所有事件", code);
+        writeLog(src, "管理員", src.getName(), "清空禮包碼 " + code + " 的所有事件", code);
         return feedback(src, "已清空所有事件");
     }
 
