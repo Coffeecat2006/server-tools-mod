@@ -32,6 +32,7 @@ public class RedeemState extends PersistentState {
             Codec.INT.fieldOf("limit").forGetter(r -> r.limit),
             Codec.LONG.fieldOf("expiryEpoch").forGetter(r -> r.expiryEpoch),
             Codec.BOOL.fieldOf("singleUse").forGetter(r -> r.singleUse),
+            Codec.BOOL.fieldOf("available").forGetter(r -> r.available),
             ItemStack.CODEC.listOf().fieldOf("items").forGetter(r -> r.items),
             Codec.INT.fieldOf("redeemedCount").forGetter(r -> r.redeemedCount),
             Codec.STRING.listOf()
@@ -40,17 +41,21 @@ public class RedeemState extends PersistentState {
                      set  -> { List<String> ls = new ArrayList<>(); for (UUID u: set) ls.add(u.toString()); return ls; }
                  )
                  .fieldOf("usedPlayers").forGetter(r -> r.usedPlayers)
+            Codec.unboundedMap(Codec.STRING, Codec.STRING)
+                 .fieldOf("events").forGetter(r -> r.events)
         )
-        .apply(instance, (code, message, limit, expiryEpoch, singleUse, items, redeemedCount, usedPlayers) -> {
+        .apply(instance, (code, message, limit, expiryEpoch, singleUse, available, items, redeemedCount, usedPlayers, events) -> {
             RedeemManager.Redeem r = new RedeemManager.Redeem();
             r.code = code;
             r.message = message;
             r.limit = limit;
             r.expiryEpoch = expiryEpoch;
             r.singleUse = singleUse;
+            r.available = available;
             r.items = new ArrayList<>(items);
             r.redeemedCount = redeemedCount;
             r.usedPlayers = new HashSet<>(usedPlayers);
+            r.events = new HashMap<>(events);
             return r;
         })
     );
