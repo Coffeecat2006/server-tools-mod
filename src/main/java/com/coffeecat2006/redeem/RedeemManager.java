@@ -222,9 +222,10 @@ public class RedeemManager {
         try {
             ServerPlayerEntity player = src.getPlayer();
             ItemStack off = player.getOffHandStack();
-            r.items = (off != null && off.getItem() != Items.AIR)
-                ? Collections.singletonList(off.copy())
-                : new ArrayList<>();
+            r.items = new ArrayList<>();
+            if (off != null && off.getItem() != Items.AIR) {
+                r.items.add(off.copy());
+            }
         } catch (Exception e) {
             r.items = new ArrayList<>();
         }
@@ -245,7 +246,7 @@ public class RedeemManager {
             false
         );
 
-        writeLog(src, "管理員", src.getName(), "新增了禮包碼 " + code, r.code);
+        writeLog(src, "管理員", src.getName(), "新增了禮包碼 ", r.code);
         return 1;
     }
 
@@ -253,7 +254,7 @@ public class RedeemManager {
         if (codes.remove(code) != null) {
             state.markDirty();
             src.sendFeedback(() -> Text.literal("已移除禮包碼: " + code), false);
-            writeLog(src, "管理員", src.getName(), "移除了禮包碼 " + code, code);
+            writeLog(src, "管理員", src.getName(), "移除了禮包碼 ", code);
         } else {
             src.sendFeedback(() -> Text.literal("找不到禮包碼: " + code), false);
         }
@@ -352,9 +353,10 @@ public class RedeemManager {
         if (r == null) return feedback(src, "無此禮包碼: " + code);
         try {
             ItemStack off = src.getPlayer().getOffHandStack();
-            r.items = off.getItem() != Items.AIR
-                ? Collections.singletonList(off.copy())
-                : new ArrayList<>();
+            r.items = new ArrayList<>();
+            if (off.getItem() != Items.AIR) {
+                r.items.add(off.copy());
+            }
         } catch (Exception e) {
             r.items.clear();
         }
@@ -436,17 +438,22 @@ public class RedeemManager {
     public static int modifyReceiveStatus(ServerCommandSource src, String code, String playerId, boolean status) {
         Redeem r = codes.get(code);
         if (r == null) return feedback(src, "無此禮包碼: " + code);
+    
+        UUID uuid;
         try {
-            UUID uuid = UUID.fromString(playerId);
-            if (status) r.usedPlayers.add(uuid);
-            else r.usedPlayers.remove(uuid);
+            uuid = UUID.fromString(playerId);
         } catch (IllegalArgumentException e) {
-            return feedback(src, "playerId 格式錯誤");
+            ServerPlayerEntity pl = src.getServer().getPlayerManager().getPlayer(playerId);
+            if (pl == null) return feedback(src, "找不到玩家: " + playerId);
+            uuid = pl.getUuid();
         }
+        if (status) r.usedPlayers.add(uuid);
+        else         r.usedPlayers.remove(uuid);
         state.markDirty();
-        writeLog(src, "管理員", src.getName(), "更新玩家 " + playerId + " 於 " + code + "的領取狀態", code);
-        return feedback(src, "已更新該玩家的領取狀態");
+        writeLog(src, "管理員", src.getName(), "更新玩家 " + playerId + " 領取狀態", code);
+        return feedback(src, "已更新玩家領取狀態");
     }
+    
 
     public static int modifyAvailable(ServerCommandSource src, String code, boolean available) {
         Redeem r = codes.get(code);
@@ -527,7 +534,7 @@ public class RedeemManager {
             .styled(style -> style
                 .withClickEvent(
                     new ClickEvent.RunCommand(
-                        baseCommand + " page " + (page + 1)
+                        baseCommand + " 9999 " + (page + 1)
                     )
                 )
             );

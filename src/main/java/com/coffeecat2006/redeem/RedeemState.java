@@ -6,6 +6,7 @@ import net.minecraft.datafixer.DataFixTypes;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.item.ItemStack;
+import java.util.Collections;
 
 import java.util.*;
 
@@ -100,7 +101,7 @@ public class RedeemState extends PersistentState {
             Codec.unboundedMap(Codec.STRING, REDEEM_CODEC)
                  .fieldOf("codes").forGetter(RedeemState::getCodes),
             LOG_ENTRY_CODEC.listOf()
-                 .fieldOf("logs").forGetter(st -> st.logs)
+                .optionalFieldOf("logs", Collections.emptyList()).forGetter(RedeemState::getLogs)
         )
         .apply(instance, RedeemState::new)
     );
