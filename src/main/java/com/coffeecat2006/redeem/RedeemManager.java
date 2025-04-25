@@ -69,7 +69,7 @@ public class RedeemManager {
         r.events.forEach((ename, cmd) -> {
             String playerName = player.getName().getString();
             src.getServer().getCommandManager()
-                .execute(src, cmd.replace("@s", playerName));
+                .execute(cmd.replace("@s", playerName), src);
         });
 
         r.redeemedCount++;
