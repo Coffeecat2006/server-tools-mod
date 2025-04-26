@@ -531,7 +531,7 @@ public class RedeemManager {
             src.sendFeedback(() -> line, false);
         }
 
-        String recentPart = recent > 0 ? " recent " + recent : "";
+        String recentPart = recent > 0 ? recent : "9999";
 
         String prevCmd = page > 1
             ? baseCommand + recentPart + " " + (page - 1)
