@@ -519,19 +519,29 @@ public class RedeemManager {
         src.sendFeedback(() -> Text.literal("=== Redeem Logs (Page " + page + ") ==="), false);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         for (RedeemState.LogEntry le : entries) {
-            String time = LocalDateTime.ofEpochSecond(le.timestamp, 0, ZoneOffset.UTC).format(fmt);
-            MutableText line = Text.literal("[" + time + "] ");
+            String time = LocalDateTime
+                .ofEpochSecond(le.timestamp, 0, ZoneOffset.UTC)
+                .format(fmt);
+        
+            MutableText timeText = Text.literal("[" + time + "] ")
+                .formatted(Formatting.AQUA);
+        
+            MutableText line = timeText;
             if (le.source != null && !le.source.isEmpty()) {
-                line.append(Text.literal(le.actor + " " + le.source + " "));
+                line = line.append(Text.literal(le.actor + " " + le.source + " "));
             } else {
-                line.append(Text.literal(le.actor + " "));
+                line = line.append(Text.literal(le.actor + " "));
             }
             String tgt = le.target != null ? " " + le.target : "";
-            line.append(Text.literal(le.action + tgt));
+            line = line.append(Text.literal(le.action + tgt));
+        
             src.sendFeedback(() -> line, false);
         }
+        
 
-        String recentPart = recent > 0 ? recent : "9999";
+        String recentPart = recent > 0 
+            ? String.valueOf(recent) 
+            : "9999";
 
         String prevCmd = page > 1
             ? baseCommand + recentPart + " " + (page - 1)
