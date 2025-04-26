@@ -535,8 +535,9 @@ public class RedeemManager {
             String tgt = le.target != null ? " " + le.target : "";
             line = line.append(Text.literal(le.action + tgt));
         
-            src.sendFeedback(() -> line, false);
-        }
+            final MutableText sendLine = line;
+            src.sendFeedback(() -> sendLine, false);
+        }        
         
 
         String recentPart = recent > 0 
