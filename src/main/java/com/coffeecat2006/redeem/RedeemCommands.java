@@ -149,7 +149,7 @@ public class RedeemCommands {
                 .then(CommandManager.literal("event")
                 .then(CommandManager.literal("add")
                         .then(CommandManager.argument("ename", StringArgumentType.word())
-                        .then(CommandManager.argument("cmd", StringArgumentType.string())
+                        .then(CommandManager.argument("cmd", StringArgumentType.greedyString())
                                 .executes(ctx -> RedeemManager.modifyEventAdd(
                                 ctx.getSource(),
                                 StringArgumentType.getString(ctx, "code"),
