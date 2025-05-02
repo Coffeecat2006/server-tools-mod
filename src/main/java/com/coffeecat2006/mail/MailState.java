@@ -11,7 +11,7 @@ import java.util.*;
 public class MailState extends PersistentState {
     private final Map<String, Mail> mails = new LinkedHashMap<>();
     private final Map<String, List<String>> byRecipient = new HashMap<>();
-    private final Set<String> blacklist = new HashSet<>();
+    private final HashSet<String> blacklist = new HashSet<>();
     private final List<LogEntry> logs = new ArrayList<>();
 
     public static final Codec<LogEntry> LOG_CODEC = RecordCodecBuilder.create(inst -> inst.group(
@@ -54,13 +54,13 @@ public class MailState extends PersistentState {
     );
 
     public MailState() { super(); }
-    private MailState(Map<String, Mail> mails, Map<String, List<String>> byRec, Set<String> bl, List<LogEntry> logs) {
+    private MailState(Map<String,Mail> mails, Map<String,List<String>> byRec, HashSet<String> bl, List<LogEntry> logs) {
         super(); this.mails.putAll(mails); this.byRecipient.putAll(byRec); this.blacklist.addAll(bl); this.logs.addAll(logs);
     }
 
     public Map<String, Mail> getMails() { return mails; }
     public Map<String, List<String>> getByRecipient() { return byRecipient; }
-    public Set<String> getBlacklist() { return blacklist; }
+    public HashSet<String> getBlacklist() { return blacklist; }
     public List<LogEntry> getLogs() { return logs; }
 
     public static class Mail {

@@ -62,7 +62,8 @@ public class MailManager {
                     .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail pickup " + m.id)))
                 );
             }
-            src.sendFeedback(() -> entry, false);
+            final MutableText sendEntry = entry;
+            src.sendFeedback(() -> sendEntry, false);
         }
         // 分頁導航
         if (total > 1) {
@@ -72,7 +73,8 @@ public class MailManager {
             MutableText next = Text.literal(">");
             if (p < total) next.styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail open " + (p + 1))));
             nav = nav.append(next);
-            src.sendFeedback(() -> nav, false);
+            final MutableText sendNav = nav;
+            src.sendFeedback(() -> sendNav, false);
         }
         return 1;
     }
