@@ -87,7 +87,7 @@ public class MailManager {
             if (state.getBlacklist().contains(sender)) {
                 return 0;
             }
-        }
+
         // 生成 ID
         String id = "#" + randomAlphaNum(6);
         MailState.Mail m = new MailState.Mail();
