@@ -135,7 +135,7 @@ public class MailManager {
         if (recv != null) recv.sendMessage(notice, false);
         src.sendFeedback(() -> Text.literal("已寄送信件 " + id + " 給 " + recipient), false);
         return 1;
-
+    }
     // 閱讀信件
     public static int read(ServerCommandSource src, String id) {
         MailState.Mail m = state.getMails().get(id);
