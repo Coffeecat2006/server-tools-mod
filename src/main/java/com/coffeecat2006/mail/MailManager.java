@@ -108,7 +108,7 @@ public class MailManager {
                 if (!src.hasPermissionLevel(2)) {
                     if (off != null && off.getItem() != Items.AIR) {
                         m.packageItem = off.copy();
-                        p.getInventory().removeStack(off);
+                        p.setStackInHand(Hand.OFF_HAND, ItemStack.EMPTY);
                     }
                 } else {
                     if (off != null && off.getItem() != Items.AIR) {
@@ -126,7 +126,7 @@ public class MailManager {
             .add(0, id);
         state.markDirty();
         // 線上通知
-        MinecraftServer server = src.getMinecraftServer();
+        MinecraftServer server = src.getServer();
         server.getPlayerManager().getPlayer(recipient);
         ServerPlayerEntity recv = server.getPlayerManager().getPlayer(recipient);
         MutableText notice = Text.literal(src.getName() + " 寄給你一封信: " + title)

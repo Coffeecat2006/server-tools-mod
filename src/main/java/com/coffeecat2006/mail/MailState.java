@@ -36,7 +36,13 @@ public class MailState extends PersistentState {
     public static final Codec<MailState> STATE_CODEC = RecordCodecBuilder.create(inst -> inst.group(
         Codec.unboundedMap(Codec.STRING, MAIL_CODEC).fieldOf("mails").forGetter(ms -> ms.mails),
         Codec.unboundedMap(Codec.STRING, Codec.list(Codec.STRING)).fieldOf("byRecipient").forGetter(ms -> ms.byRecipient),
-        Codec.STRING.listOf().xmap(l -> new HashSet<>(l), s -> new ArrayList<>(s)).fieldOf("blacklist").forGetter(ms -> ms.blacklist),
+        Codec.STRING.listOf()
+            .xmap(
+            (List<String> list) -> new HashSet<>(list),
+            (Set<String> set)   -> new ArrayList<>(set)
+            )
+            .fieldOf("blacklist")
+            .forGetter(ms -> ms.blacklist),
         LOG_CODEC.listOf().optionalFieldOf("logs", Collections.emptyList()).forGetter(ms -> ms.logs)
     ).apply(inst, MailState::new));
 
