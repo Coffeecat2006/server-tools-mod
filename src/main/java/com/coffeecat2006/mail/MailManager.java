@@ -1,5 +1,6 @@
 package com.coffeecat2006.mail;
 
+import net.minecraft.util.Hand;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.ClickEvent;

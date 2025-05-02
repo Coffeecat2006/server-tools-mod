@@ -38,8 +38,8 @@ public class MailState extends PersistentState {
         Codec.unboundedMap(Codec.STRING, Codec.list(Codec.STRING)).fieldOf("byRecipient").forGetter(ms -> ms.byRecipient),
         Codec.STRING.listOf()
             .xmap(
-            (List<String> list) -> new HashSet<>(list),
-            (Set<String> set)   -> new ArrayList<>(set)
+                (List<String> list) -> new HashSet<>(list),
+                (Set<String> set)   -> new ArrayList<>(set)
             )
             .fieldOf("blacklist")
             .forGetter(ms -> ms.blacklist),
