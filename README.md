@@ -46,7 +46,7 @@
 
 ---
 
-## 指令用法
+## 禮包碼指令用法
 
 ### 新增 / 移除 / 列表
 
@@ -135,6 +135,72 @@
 # 顯示指定子指令詳細說明
 /redeem help <子指令>
 ```
+
+## 信箱指令用法
+
+### 開啟信箱
+```shell
+/mail open [<頁碼>]
+```
+- 列出當前玩家信箱，每頁最多 5 封信
+
+### 寄送信件
+```shell
+/mail send <player> <title> <content> <item>
+```
+- `player`：若為管理員可輸入 `@a` 或 `all`，否則僅單一玩家 ID
+- `title`：信件標題
+- `content`：內文，可用 `
+` 換行
+- `item`：`true` 打包副手物品、`false` 無包裹
+
+### 查看信件
+```shell
+/mail read <id>
+```
+- 顯示指定 ID 信件內容，並標記為已閱讀
+
+### 領取包裹
+```shell
+/mail pickup <id>
+```
+- 領取信件中包裹物品
+
+### 刪除信件
+```shell
+/mail delete <id>
+```
+- 命令後會出現 `[確認] [取消]` 按鈕，再次輸入 `/mail delete <id> confirm` 或 `cancel`
+
+### 批量刪除
+```shell
+/mail delete all [read|received]
+```
+- `all`：刪除所有
+- `read`：刪除所有已閱讀
+- `received`：刪除所有已領包裹
+- 同樣需後續 `confirm` 或 `cancel`
+
+### 黑名單
+```shell
+/mail blacklist
+/mail blacklist add <player>
+/mail blacklist remove <player>
+```
+- `add`/`remove` 操作皆需 `confirm`
+
+### 日誌查詢（管理員）
+```shell
+/mail log [<page>]
+```
+- 分頁顯示所有寄送紀錄，格式：`[時間] sender -> recipient <id> [查看]`
+
+### 幫助
+```shell
+/mail help
+```
+- 顯示所有 `/mail` 指令概述
+
 
 ---
 
