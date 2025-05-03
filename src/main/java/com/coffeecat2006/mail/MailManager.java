@@ -209,22 +209,25 @@ public class MailManager {
         } else {
             src.sendFeedback(() -> Text.literal("此信件無包裹"), false);
         }
+        // 所有按鈕
         // 刪除信件按鈕
         src.sendFeedback(() -> Text.literal(" [刪除信件]")
             .formatted(Formatting.RED)
             .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail delete " + m.id + " confirm")))
             .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊刪除信件")))), false);
+            
         // 將寄件者設為黑名單按鈕
         src.sendFeedback(() -> Text.literal(" [將寄件者 " + m.sender + " 加入黑名單]")
             .formatted(Formatting.RED)
             .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail blacklist add " + m.sender + " confirm")))
             .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊加入黑名單")))), false);
-        return 1;
+
         // 回信按鈕
         src.sendFeedback(() -> Text.literal(" [回信]")
             .formatted(Formatting.YELLOW)
             .styled(s -> s.withClickEvent(new ClickEvent.SuggestCommand("/mail send " + m.sender + " \"Re: " + m.title + "\" \"\" false")))
             .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊回信")))), false);
+
         return 1;
     }
 
