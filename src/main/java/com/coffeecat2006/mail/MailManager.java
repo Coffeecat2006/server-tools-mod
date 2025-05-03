@@ -80,6 +80,18 @@ public class MailManager {
             final MutableText sendEntry = entry;
             src.sendFeedback(() -> sendEntry, false);
         }
+        src.sendFeedback(() -> Text.literal("[刪除所有信件]")
+            .formatted(Formatting.RED)
+            .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail delete all")))
+            .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊刪除所有信件")))), false);
+        src.sendFeedback(() -> Text.literal("[刪除所有已讀信件]")
+            .formatted(Formatting.RED)
+            .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail delete read")))
+            .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊刪除所有已讀信件")))), false);
+        src.sendFeedback(() -> Text.literal("[刪除所有已領取信件]")
+            .formatted(Formatting.RED)
+            .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail delete received")))
+            .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊刪除所有已領取信件")))), false);
         // 分頁導航
         if (total > 1) {
             MutableText nav = Text.literal("<");
@@ -196,7 +208,7 @@ public class MailManager {
         if (m.hasItem) {
             src.sendFeedback(() -> Text.literal("包裹: " + (m.isPickedUp ? "已領取" : "未領取")), false);
             if (!m.isPickedUp) {
-                src.sendFeedback(() -> Text.literal("領取包裹")
+                src.sendFeedback(() -> Text.literal("[領取包裹]")
                     .formatted(Formatting.GOLD)
                     .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail pickup \"" + m.id + "\"")))
                     .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊領取包裹")))), false);
@@ -213,13 +225,13 @@ public class MailManager {
         // 刪除信件按鈕
         src.sendFeedback(() -> Text.literal(" [刪除信件]")
             .formatted(Formatting.RED)
-            .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail delete " + m.id + " confirm")))
+            .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail delete \"" + m.id + "\"")))
             .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊刪除信件")))), false);
             
         // 將寄件者設為黑名單按鈕
         src.sendFeedback(() -> Text.literal(" [將寄件者 " + m.sender + " 加入黑名單]")
             .formatted(Formatting.RED)
-            .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail blacklist add " + m.sender + " confirm")))
+            .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail blacklist add " + m.sender)))
             .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊加入黑名單")))), false);
 
         // 回信按鈕
@@ -266,12 +278,18 @@ public class MailManager {
         if (!force) {
             src.sendFeedback(() -> Text.literal("確定要刪除 " + target + " 嗎? ")
                 .append(Text.literal("[確認]").formatted(Formatting.GREEN)
-                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail delete " + target + " confirm"))))
+                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail delete \"" + target + "\" confirm"))))
                 .append(Text.literal(" "))
                 .append(Text.literal("[取消]").formatted(Formatting.RED)
-                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail delete " + target + " cancel")))),
+                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail delete \"" + target + "\" cancel")))),
                 false
                 );
+            return 1;
+        }
+        
+        // 如果是取消刪除
+        if (target.endsWith(" cancel")) {
+            src.sendFeedback(() -> Text.literal("已取消刪除"), false);
             return 1;
         }
         // 執行刪除
