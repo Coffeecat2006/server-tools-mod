@@ -144,8 +144,8 @@ public class MailManager {
         ServerPlayerEntity recv = server.getPlayerManager().getPlayer(recipient);
         MutableText notice = Text.literal(src.getName() + " 寄給你一封信: " + title)
             .formatted(Formatting.GREEN)
-            .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail open 1")));
-        notice = notice.styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看信件內容"))));
+            .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail open 1")))
+        .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看信件內容"))));
         if (recv != null) {
             recv.sendMessage(notice, false);
             // 物品通知
@@ -164,10 +164,7 @@ public class MailManager {
             );
         }
         // 廣播給所有線上玩家
-        MinecraftServer server = src.getServer();
-        for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
-            p.sendMessage(notice, false);
-        }
+        server.getPlayerManager().sendToAll(notice);
         // 回傳給寄件者的反饋
         if (recv != null) recv.sendMessage(notice, false);
         src.sendFeedback(() -> Text.literal("已寄送信件 " + id + " 給 " + recipient), false);
