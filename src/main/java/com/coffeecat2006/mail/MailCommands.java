@@ -38,7 +38,7 @@ public class MailCommands {
                 )
                 // 閱讀信件
                 .then(CommandManager.literal("read")
-                    .then(CommandManager.argument("id", StringArgumentType.word())
+                    .then(CommandManager.argument("id", StringArgumentType.string())
                         .executes(ctx -> MailManager.read(
                             ctx.getSource(),
                             StringArgumentType.getString(ctx, "id")
@@ -47,7 +47,7 @@ public class MailCommands {
                 )
                 // 領取包裹
                 .then(CommandManager.literal("pickup")
-                    .then(CommandManager.argument("id", StringArgumentType.word())
+                    .then(CommandManager.argument("id", StringArgumentType.string())
                         .executes(ctx -> MailManager.pickup(
                             ctx.getSource(),
                             StringArgumentType.getString(ctx, "id")
@@ -56,7 +56,7 @@ public class MailCommands {
                 )
                 // 刪除信件，含 confirm/cancel
                 .then(CommandManager.literal("delete")
-                    .then(CommandManager.argument("target", StringArgumentType.word())
+                    .then(CommandManager.argument("target", StringArgumentType.string())
                         .executes(ctx -> MailManager.delete(
                             ctx.getSource(),
                             StringArgumentType.getString(ctx, "target"),
