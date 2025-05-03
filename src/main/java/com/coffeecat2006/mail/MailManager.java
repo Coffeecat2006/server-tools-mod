@@ -217,7 +217,7 @@ public class MailManager {
         // 回信按鈕
         src.sendFeedback(() -> Text.literal(" [回信]")
             .formatted(Formatting.YELLOW)
-            .styled(s -> s.withClickEvent(new ClickEvent.suggestCommand("/mail send " + m.sender + " \"Re: " + m.title + "\" \"\" false")))
+            .styled(s -> s.withClickEvent(new ClickEvent.SuggestCommand("/mail send " + m.sender + " \"Re: " + m.title + "\" \"\" false")))
             .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊回信")))), false);
         return 1;
     }
