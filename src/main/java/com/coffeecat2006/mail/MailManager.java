@@ -163,6 +163,12 @@ public class MailManager {
                     .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看信件內容"))))
             );
         }
+        // 廣播給所有線上玩家
+        MinecraftServer server = src.getServer();
+        for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
+            p.sendMessage(notice, false);
+        }
+        // 回傳給寄件者的反饋
         if (recv != null) recv.sendMessage(notice, false);
         src.sendFeedback(() -> Text.literal("已寄送信件 " + id + " 給 " + recipient), false);
         return 1;
