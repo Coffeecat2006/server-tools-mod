@@ -20,6 +20,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.ChatMessageS2CPacket;
+import net.minecraft.network.message.MessageSignatureData;
+import net.minecraft.network.message.SignedMessage;
+import com.mojang.authlib.GameProfile;
 
 public class MailManager {
     private static MailState state;
@@ -166,8 +169,18 @@ public class MailManager {
             );
         }
         // 廣播給所有線上玩家
-        Packet<?> packet = new ChatMessageS2CPacket(notice, net.minecraft.network.message.MessageType.CHAT, src.getName());
+        ServerPlayerEntity sender = src.getPlayer();
+        GameProfile gameProfile = sender.getGameProfile();
+        SignedMessage signedMessage = SignedMessage.of(gameProfile.getId(), notice.getString());
+        MessageSignatureData messageSignatureData = null;
+
+        ChatMessageS2CPacket packet = new ChatMessageS2CPacket(
+            signedMessage,
+            src.getName(),
+            gameProfile
+        );
         server.getPlayerManager().sendToAll(packet);
+
         // 回傳給寄件者的反饋
         if (recv != null) recv.sendMessage(notice, false);
         src.sendFeedback(() -> Text.literal("已寄送信件 " + id + " 給 " + recipient), false);
