@@ -145,12 +145,12 @@ public class MailManager {
         state.markDirty();
         // 線上通知
         MinecraftServer server = src.getServer();
-        server.getPlayerManager().getPlayer(recipient);
         ServerPlayerEntity recv = server.getPlayerManager().getPlayer(recipient);
         MutableText notice = Text.literal(src.getName() + " 寄給你一封信: " + title)
             .formatted(Formatting.GREEN)
             .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail open 1")))
-        .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看信件內容"))));
+            .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看信件內容"))));
+
         if (recv != null) {
             recv.sendMessage(notice, false);
             // 物品通知
@@ -159,30 +159,17 @@ public class MailManager {
                 itemNotice = itemNotice.styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看信件內容"))));
                 recv.sendMessage(itemNotice, false);
             }
-        } else {
-            // 離線通知
-            server.getPlayerManager().sendToAll(
-                Text.literal(src.getName() + " 寄給 " + recipient + " 一封信: " + title)
-                    .formatted(Formatting.GREEN)
-                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail open 1")))
-                    .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看信件內容"))))
-            );
         }
-        // 廣播給所有線上玩家
-        ServerPlayerEntity sender = src.getPlayer();
-        GameProfile gameProfile = sender.getGameProfile();
-        SignedMessage signedMessage = SignedMessage.of(gameProfile.getId(), notice.getString());
-        MessageSignatureData messageSignatureData = null;
 
-        ChatMessageS2CPacket packet = new ChatMessageS2CPacket(
-            signedMessage,
-            src.getName(),
-            gameProfile
-        );
-        server.getPlayerManager().sendToAll(packet);
+        // 廣播給所有在線玩家
+        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+            if (!player.getUuid().equals(recv != null ? recv.getUuid() : null)) {
+                player.sendMessage(Text.literal(src.getName() + " 寄給 " + recipient + " 一封信: " + title)
+                    .formatted(Formatting.GREEN), false);
+            }
+        }
 
         // 回傳給寄件者的反饋
-        if (recv != null) recv.sendMessage(notice, false);
         src.sendFeedback(() -> Text.literal("已寄送信件 " + id + " 給 " + recipient), false);
         return 1;
     }
