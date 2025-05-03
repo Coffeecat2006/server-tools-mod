@@ -1,6 +1,6 @@
 # RedeemMod
 
-**Version:** 1.0.2
+**Version:** 1.0.2  
 **Minecraft:** 1.21.5  
 **Fabric Loader:** 1.21.5  
 **Fabric API:** 0.88.0+  

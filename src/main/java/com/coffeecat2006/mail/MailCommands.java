@@ -25,8 +25,8 @@ public class MailCommands {
                 .then(CommandManager.literal("send")
                     .requires(src -> src.hasPermissionLevel(2))
                     .then(CommandManager.argument("player", StringArgumentType.word())
-                        .then(CommandManager.argument("title", StringArgumentType.greedyString())
-                            .then(CommandManager.argument("content", StringArgumentType.greedyString())
+                        .then(CommandManager.argument("title", StringArgumentType.String())
+                            .then(CommandManager.argument("content", StringArgumentType.String())
                                 .then(CommandManager.argument("item", BoolArgumentType.bool())
                                     .executes(ctx -> MailManager.send(
                                         ctx.getSource(),
