@@ -48,18 +48,28 @@ public class MailManager {
                 .formatted(Formatting.AQUA);
 
             // 已讀標記
-            if (m.isRead) entry = entry.append(Text.literal(" [已閱讀]").formatted(Formatting.GRAY));
-            // 查看
-            entry = entry.append(Text.literal(" [查看]")
-                .formatted(Formatting.YELLOW)
-                .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail read " + m.id)))
-            );
+            if (m.isRead) {
+                entry = entry.append(Text.literal(" [已讀]")
+                    .formatted(Formatting.YELLOW)
+                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail read \"" + m.id + "\"")))
+                    .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看信件內容"))))
+                );
+            } else {
+                // 查看
+                entry = entry.append(Text.literal(" [查看]")
+                    .formatted(Formatting.YELLOW)
+                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail read \"" + m.id + "\"")))
+                    .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看信件內容"))))
+                );
+                entry = entry.append(Text.literal(" [未讀]").formatted(Formatting.RED));
+            }
             // 包裹
             if (m.hasItem) {
                 if (m.isPickedUp) entry = entry.append(Text.literal(" [已領取]").formatted(Formatting.GRAY));
                 else entry = entry.append(Text.literal(" [領取包裹]")
                     .formatted(Formatting.GOLD)
-                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail pickup " + m.id)))
+                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail pickup \"" + m.id + "\"")))
+                    .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊領取包裹"))))
                 );
             }
             final MutableText sendEntry = entry;
@@ -135,6 +145,24 @@ public class MailManager {
         MutableText notice = Text.literal(src.getName() + " 寄給你一封信: " + title)
             .formatted(Formatting.GREEN)
             .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail open 1")));
+        notice = notice.styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看信件內容"))));
+        if (recv != null) {
+            recv.sendMessage(notice, false);
+            // 物品通知
+            if (withItem) {
+                MutableText itemNotice = Text.literal("信件中包含物品，請查看信件").formatted(Formatting.YELLOW);
+                itemNotice = itemNotice.styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看信件內容"))));
+                recv.sendMessage(itemNotice, false);
+            }
+        } else {
+            // 離線通知
+            server.getPlayerManager().sendToAll(
+                Text.literal(src.getName() + " 寄給 " + recipient + " 一封信: " + title)
+                    .formatted(Formatting.GREEN)
+                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail open 1")))
+                    .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看信件內容"))))
+            );
+        }
         if (recv != null) recv.sendMessage(notice, false);
         src.sendFeedback(() -> Text.literal("已寄送信件 " + id + " 給 " + recipient), false);
         return 1;
@@ -159,6 +187,38 @@ public class MailManager {
         for (String line : m.content.split("\\n")) {
             src.sendFeedback(() -> Text.literal(line), false);
         }
+        if (m.hasItem) {
+            src.sendFeedback(() -> Text.literal("包裹: " + (m.isPickedUp ? "已領取" : "未領取")), false);
+            if (!m.isPickedUp) {
+                src.sendFeedback(() -> Text.literal("領取包裹")
+                    .formatted(Formatting.GOLD)
+                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail pickup \"" + m.id + "\"")))
+                    .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊領取包裹")))), false);
+            } else {
+                src.sendFeedback(() -> Text.literal("包裹內容: " + m.packageItem.getName().getString()), false);
+                if (m.packageItem.getCount() > 1) {
+                    src.sendFeedback(() -> Text.literal("數量: " + m.packageItem.getCount()), false);
+                }
+            }
+        } else {
+            src.sendFeedback(() -> Text.literal("此信件無包裹"), false);
+        }
+        // 刪除信件按鈕
+        src.sendFeedback(() -> Text.literal(" [刪除信件]")
+            .formatted(Formatting.RED)
+            .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail delete " + m.id + " confirm")))
+            .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊刪除信件")))), false);
+        // 將寄件者設為黑名單按鈕
+        src.sendFeedback(() -> Text.literal(" [將寄件者 " + m.sender + " 加入黑名單]")
+            .formatted(Formatting.RED)
+            .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail blacklist add " + m.sender + " confirm")))
+            .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊加入黑名單")))), false);
+        return 1;
+        // 回信按鈕
+        src.sendFeedback(() -> Text.literal(" [回信]")
+            .formatted(Formatting.YELLOW)
+            .styled(s -> s.withClickEvent(new ClickEvent.suggestCommand("/mail send " + m.sender + " \"Re: " + m.title + "\" \"\" false")))
+            .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊回信")))), false);
         return 1;
     }
 
