@@ -23,6 +23,7 @@ import net.minecraft.network.packet.s2c.play.ChatMessageS2CPacket;
 import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.network.message.SignedMessage;
 import com.mojang.authlib.GameProfile;
+import java.util.stream.Collectors; // Added import
 
 public class MailManager {
     private static MailState state;
@@ -623,7 +624,7 @@ public class MailManager {
             } else {
                 nav.append(Text.literal("<< 上一頁").formatted(Formatting.DARK_GRAY));
             }
-            nav.append(Text.literal("  ").formatted(Formatting.NONE)); // Spacer
+            nav.append(Text.literal("  ")); // Spacer
             if (page < totalPages) {
                 nav.append(Text.literal("下一頁 >>")
                     .formatted(Formatting.YELLOW)

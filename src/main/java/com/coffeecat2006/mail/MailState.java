@@ -18,25 +18,25 @@ public class MailState extends PersistentState {
     private final Map<UUID, Long> playerLastLoginTimestamps = new HashMap<>();
 
     public static final Codec<LogEntry> LOG_CODEC = RecordCodecBuilder.create(inst -> inst.group(
-        Codec.LONG.fieldOf("timestamp").forGetter(le -> le.timestamp),
-        Codec.STRING.optionalFieldOf("sender").orElse("").forGetter(le -> le.sender != null ? le.sender : ""),
-        Codec.STRING.optionalFieldOf("recipient").orElse("").forGetter(le -> le.recipient != null ? le.recipient : ""),
-        Codec.STRING.optionalFieldOf("mailId").orElse("").forGetter(le -> le.mailId != null ? le.mailId : ""),
-        Codec.STRING.optionalFieldOf("action").orElse("SEND").forGetter(le -> le.action != null ? le.action : "SEND"),
-        Codec.STRING.optionalFieldOf("details").orElse("").forGetter(le -> le.details != null ? le.details : "")
+        Codec.LONG.fieldOf("timestamp").forGetter((MailState.LogEntry le) -> le.timestamp),
+        Codec.STRING.optionalFieldOf("sender").orElse("").forGetter((MailState.LogEntry le) -> le.sender),
+        Codec.STRING.optionalFieldOf("recipient").orElse("").forGetter((MailState.LogEntry le) -> le.recipient),
+        Codec.STRING.optionalFieldOf("mailId").orElse("").forGetter((MailState.LogEntry le) -> le.mailId),
+        Codec.STRING.optionalFieldOf("action").orElse("SEND").forGetter((MailState.LogEntry le) -> le.action),
+        Codec.STRING.optionalFieldOf("details").orElse("").forGetter((MailState.LogEntry le) -> le.details)
     ).apply(inst, LogEntry::new));
 
     public static final Codec<Mail> MAIL_CODEC = RecordCodecBuilder.create(inst -> inst.group(
-        Codec.STRING.optionalFieldOf("id").orElse("").forGetter(m -> m.id != null ? m.id : ""),
-        Codec.STRING.optionalFieldOf("sender").orElse("").forGetter(m -> m.sender != null ? m.sender : ""),
-        Codec.STRING.optionalFieldOf("recipient").orElse("").forGetter(m -> m.recipient != null ? m.recipient : ""),
-        Codec.STRING.optionalFieldOf("title").orElse("").forGetter(m -> m.title != null ? m.title : ""),
-        Codec.STRING.optionalFieldOf("content").orElse("").forGetter(m -> m.content != null ? m.content : ""),
-        Codec.LONG.fieldOf("timestamp").forGetter(m -> m.timestamp),
-        Codec.BOOL.fieldOf("hasItem").forGetter(m -> m.hasItem),
-        Codec.BOOL.fieldOf("isRead").forGetter(m -> m.isRead),
-        Codec.BOOL.fieldOf("isPickedUp").forGetter(m -> m.isPickedUp),
-        ItemStack.CODEC.optionalFieldOf("packageItem", ItemStack.EMPTY).forGetter(m -> m.packageItem)
+        Codec.STRING.optionalFieldOf("id").orElse("").forGetter((MailState.Mail m) -> m.id),
+        Codec.STRING.optionalFieldOf("sender").orElse("").forGetter((MailState.Mail m) -> m.sender),
+        Codec.STRING.optionalFieldOf("recipient").orElse("").forGetter((MailState.Mail m) -> m.recipient),
+        Codec.STRING.optionalFieldOf("title").orElse("").forGetter((MailState.Mail m) -> m.title),
+        Codec.STRING.optionalFieldOf("content").orElse("").forGetter((MailState.Mail m) -> m.content),
+        Codec.LONG.fieldOf("timestamp").forGetter((MailState.Mail m) -> m.timestamp),
+        Codec.BOOL.fieldOf("hasItem").forGetter((MailState.Mail m) -> m.hasItem),
+        Codec.BOOL.fieldOf("isRead").forGetter((MailState.Mail m) -> m.isRead),
+        Codec.BOOL.fieldOf("isPickedUp").forGetter((MailState.Mail m) -> m.isPickedUp),
+        ItemStack.CODEC.optionalFieldOf("packageItem", ItemStack.EMPTY).forGetter((MailState.Mail m) -> m.packageItem)
     ).apply(inst, (id, sender, recipient, title, content, timestamp, hasItem, isRead, isPickedUp, packageItem) -> {
         Mail mail = new Mail(id, sender, recipient, title, content, timestamp, hasItem, isRead, isPickedUp);
         mail.packageItem = packageItem;
@@ -55,15 +55,18 @@ public class MailState extends PersistentState {
             .forGetter(ms -> ms.blacklist),
         LOG_CODEC.listOf().optionalFieldOf("logs", Collections.emptyList()).forGetter(ms -> ms.logs),
         Codec.list(Codec.STRING.xmap(UUID::fromString, UUID::toString))
-            .xmap(HashSet::new, ArrayList::new) // Convert List<UUID> to Set<UUID> and back
-            .optionalFieldOf("known_players_uuids", new HashSet<>()) // Default to empty set
-            .forGetter(ms -> ms.knownPlayersUuids),
+            .xmap(
+                (List<UUID> list) -> new HashSet<>(list),      // For deserialization (List -> Set)
+                (Set<UUID> set) -> new ArrayList<>(set)        // For serialization (Set -> List)
+            )
+            .optionalFieldOf("known_players_uuids", new HashSet<UUID>()) // Default if NBT field is missing
+            .forGetter((MailState ms) -> ms.getKnownPlayersUuids()), // Provide the Set for serialization
         Codec.unboundedMap(Codec.STRING.xmap(UUID::fromString, UUID::toString), Codec.STRING)
             .optionalFieldOf("known_player_names", new HashMap<>()) // Default to empty map
-            .forGetter(ms -> ms.knownPlayerNames),
+            .forGetter((MailState ms) -> ms.getKnownPlayerNames()), // Explicit lambda
         Codec.unboundedMap(Codec.STRING.xmap(UUID::fromString, UUID::toString), Codec.LONG)
             .optionalFieldOf("player_last_login_timestamps", new HashMap<>()) // Default to empty map
-            .forGetter(ms -> ms.playerLastLoginTimestamps)
+            .forGetter((MailState ms) -> ms.getPlayerLastLoginTimestamps()) // Explicit lambda
     ).apply(inst, (mails, byRec, bl, logs, knownUuids, knownNames, lastLogins) -> new MailState(mails, byRec, bl, logs, knownUuids, knownNames, lastLogins)));
 
     public static final PersistentStateType<MailState> TYPE = new PersistentStateType<>(
