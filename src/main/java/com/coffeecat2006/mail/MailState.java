@@ -59,7 +59,7 @@ public class MailState extends PersistentState {
                 (List<UUID> list) -> new HashSet<>(list),      // For deserialization (List -> Set)
                 (Set<UUID> set) -> new ArrayList<>(set)        // For serialization (Set -> List)
             )
-            .optionalFieldOf("known_players_uuids", java.util.Collections.emptySet()) // Use Collections.emptySet()
+            .optionalFieldOf("known_players_uuids", new HashSet<UUID>()) // Use new HashSet<UUID>() for default
             .forGetter((MailState ms) -> ms.getKnownPlayersUuids()), // Provide the Set for serialization
         Codec.unboundedMap(Codec.STRING.xmap(UUID::fromString, UUID::toString), Codec.STRING)
             .optionalFieldOf("known_player_names", new HashMap<>()) // Default to empty map
