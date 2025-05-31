@@ -59,8 +59,23 @@ public class MailState extends PersistentState {
     );
 
     public MailState() { super(); }
-    private MailState(Map<String,Mail> mails, Map<String,List<String>> byRec, HashSet<String> bl, List<LogEntry> logs) {
-        super(); this.mails.putAll(mails); this.byRecipient.putAll(byRec); this.blacklist.addAll(bl); this.logs.addAll(logs);
+    private MailState(Map<String,Mail> mailsData, Map<String,List<String>> byRecipientData, HashSet<String> blacklistData, List<LogEntry> logsData) {
+        super();
+        // For mails (Map<String, Mail>), the values (Mail objects) are mutable, map structure itself is handled by putAll.
+        this.mails.putAll(mailsData);
+
+        // For byRecipient (Map<String, List<String>>), ensure inner lists are mutable.
+        this.byRecipient.clear(); // Clear default map
+        byRecipientData.forEach((key, value) -> this.byRecipient.put(key, new ArrayList<>(value)));
+
+        // For blacklist (HashSet<String>), its codec uses xmap(HashSet::new, ArrayList::new), so blacklistData should be a HashSet.
+        // The final field is initialized as new HashSet<>().
+        this.blacklist.clear();
+        this.blacklist.addAll(blacklistData);
+
+        // For logs (List<LogEntry>), the final field is initialized as new ArrayList<>().
+        this.logs.clear();
+        this.logs.addAll(logsData);
     }
 
     public Map<String, Mail> getMails() { return mails; }
