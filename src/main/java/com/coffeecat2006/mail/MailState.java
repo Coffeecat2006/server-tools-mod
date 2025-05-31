@@ -30,8 +30,13 @@ public class MailState extends PersistentState {
         Codec.LONG.fieldOf("timestamp").forGetter(m -> m.timestamp),
         Codec.BOOL.fieldOf("hasItem").forGetter(m -> m.hasItem),
         Codec.BOOL.fieldOf("isRead").forGetter(m -> m.isRead),
-        Codec.BOOL.fieldOf("isPickedUp").forGetter(m -> m.isPickedUp)
-    ).apply(inst, Mail::new));
+        Codec.BOOL.fieldOf("isPickedUp").forGetter(m -> m.isPickedUp),
+        ItemStack.CODEC.optionalFieldOf("packageItem", ItemStack.EMPTY).forGetter(m -> m.packageItem)
+    ).apply(inst, (id, sender, recipient, title, content, timestamp, hasItem, isRead, isPickedUp, packageItem) -> {
+        Mail mail = new Mail(id, sender, recipient, title, content, timestamp, hasItem, isRead, isPickedUp);
+        mail.packageItem = packageItem;
+        return mail;
+    }));
 
     public static final Codec<MailState> STATE_CODEC = RecordCodecBuilder.create(inst -> inst.group(
         Codec.unboundedMap(Codec.STRING, MAIL_CODEC).fieldOf("mails").forGetter(ms -> ms.mails),
