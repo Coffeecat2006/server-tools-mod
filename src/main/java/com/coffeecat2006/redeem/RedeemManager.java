@@ -516,6 +516,7 @@ public class RedeemManager {
             int recent,
             int page
     ) {
+        int perPage = 10;
         src.sendFeedback(() -> Text.literal("=== Redeem Logs (Page " + page + ") ==="), false);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         for (RedeemState.LogEntry le : entries) {
@@ -548,21 +549,27 @@ public class RedeemManager {
             ? baseCommand + recentPart + " " + (page - 1)
             : baseCommand + recentPart + " " + page;
 
-        MutableText prev = Text.literal("« Prev")
-            .formatted(Formatting.GRAY, Formatting.UNDERLINE)
-            .styled(style -> style
-                .withClickEvent(new ClickEvent.RunCommand(prevCmd))
-            );
+        MutableText prev = Text.literal("« Prev");
+        if (page <= 1) {
+            prev.formatted(Formatting.DARK_GRAY);
+        } else {
+            prev.formatted(Formatting.GRAY, Formatting.UNDERLINE)
+                .styled(style -> style
+                    .withClickEvent(new ClickEvent.RunCommand(prevCmd))
+                );
+        }
 
-        String nextCmd = entries.size() < 10
-            ? baseCommand + recentPart + " " + page
-            : baseCommand + recentPart + " " + (page + 1);
+        String nextCmd = baseCommand + recentPart + " " + (page + 1);
 
-        MutableText next = Text.literal("Next »")
-            .formatted(Formatting.GRAY, Formatting.UNDERLINE)
-            .styled(style -> style
-                .withClickEvent(new ClickEvent.RunCommand(nextCmd))
-            );
+        MutableText next = Text.literal("Next »");
+        if (entries.size() < perPage) {
+            next.formatted(Formatting.DARK_GRAY);
+        } else {
+            next.formatted(Formatting.GRAY, Formatting.UNDERLINE)
+                .styled(style -> style
+                    .withClickEvent(new ClickEvent.RunCommand(nextCmd))
+                );
+        }
 
         MutableText nav = Text.literal("")
             .append(prev)
