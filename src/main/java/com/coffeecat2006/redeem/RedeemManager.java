@@ -219,16 +219,27 @@ public class RedeemManager {
             }
         }
         r.singleUse = singleUse;
-        try {
-            ServerPlayerEntity player = src.getPlayer();
+        r.items = new ArrayList<>(); // Initialize with empty list
+
+        String itemsLogDetail;
+        ServerPlayerEntity player = src.getPlayer();
+        String actorName = player != null ? player.getName().getString() : "System";
+        String sourceName = src.getName();
+
+        if (player != null) { // Player context
             ItemStack off = player.getOffHandStack();
-            r.items = new ArrayList<>();
             if (off != null && off.getItem() != Items.AIR) {
                 r.items.add(off.copy());
+                itemsLogDetail = "(含副手物品)";
+            } else {
+                src.sendFeedback(() -> Text.literal("Warning: Off-hand is empty. Redeem code '" + r.code + "' created with no items."), false);
+                itemsLogDetail = "(副手為空)";
             }
-        } catch (Exception e) {
-            r.items = new ArrayList<>();
+        } else { // Non-player context
+            src.sendFeedback(() -> Text.literal("Redeem code '" + r.code + "' created without items as command was not run by a player."), false);
+            itemsLogDetail = "(非玩家執行,無物品)";
         }
+        writeLog(src, actorName, sourceName, "新增了禮包碼 " + r.code + " " + itemsLogDetail, r.code);
 
         codes.put(r.code, r);
         state.markDirty();
@@ -245,8 +256,6 @@ public class RedeemManager {
                 ),
             false
         );
-
-        writeLog(src, "管理員", src.getName(), "新增了禮包碼 ", r.code);
         return 1;
     }
 
@@ -351,30 +360,49 @@ public class RedeemManager {
     public static int modifyItemTransform(ServerCommandSource src, String code) {
         Redeem r = codes.get(code);
         if (r == null) return feedback(src, "無此禮包碼: " + code);
-        try {
-            ItemStack off = src.getPlayer().getOffHandStack();
-            r.items = new ArrayList<>();
-            if (off.getItem() != Items.AIR) {
-                r.items.add(off.copy());
-            }
-        } catch (Exception e) {
-            r.items.clear();
+
+        ServerPlayerEntity player = src.getPlayer();
+        if (player == null) {
+            return feedback(src, "無法轉換物品: 指令必須由玩家執行.");
         }
+
+        ItemStack off = player.getOffHandStack();
+        r.items.clear();
+        String logMessageAction;
+        String feedbackMessage;
+
+        if (off != null && off.getItem() != Items.AIR) {
+            r.items.add(off.copy());
+            logMessageAction = "物品轉換為副手物品";
+            feedbackMessage = "已將禮包碼 '" + code + "' 的物品轉換為副手物品";
+        } else {
+            logMessageAction = "物品已被清空 (副手為空)";
+            feedbackMessage = "副手物品為空. 禮包碼 '" + code + "' 的物品已被清空.";
+        }
+
         state.markDirty();
-        writeLog(src, "管理員", src.getName(), "將禮包碼 " + code + " 物品換為副手物品", code);
-        return feedback(src, "已將物品轉換為副手物品");
+        writeLog(src, player.getName().getString(), src.getName(), "禮包碼 " + code + ": " + logMessageAction, code);
+        return feedback(src, feedbackMessage);
     }
 
     public static int modifyItemAdd(ServerCommandSource src, String code) {
         Redeem r = codes.get(code);
         if (r == null) return feedback(src, "無此禮包碼: " + code);
-        try {
-            ItemStack off = src.getPlayer().getOffHandStack();
-            if (off.getItem() != Items.AIR) r.items.add(off.copy());
-        } catch (Exception ignored) {}
-        state.markDirty();
-        writeLog(src, "管理員", src.getName(), "將禮包碼 " + code + " 物品新增副手物品", code);
-        return feedback(src, "已新增副手物品");
+
+        ServerPlayerEntity player = src.getPlayer();
+        if (player == null) {
+            return feedback(src, "無法新增物品: 指令必須由玩家執行.");
+        }
+
+        ItemStack off = player.getOffHandStack();
+        if (off != null && off.getItem() != Items.AIR) {
+            r.items.add(off.copy());
+            state.markDirty();
+            writeLog(src, player.getName().getString(), src.getName(), "禮包碼 " + code + ": 新增副手物品", code);
+            return feedback(src, "已新增副手物品至禮包碼 '" + code + "'.");
+        } else {
+            return feedback(src, "副手物品為空. 未新增物品至禮包碼 '" + code + "'.");
+        }
     }
 
     public static int modifyCode(ServerCommandSource src, String code, String newCode) {
