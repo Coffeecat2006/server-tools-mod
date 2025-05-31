@@ -24,7 +24,7 @@ public class MailCommands {
                 // 寄送信件
                 .then(CommandManager.literal("send")
                     .requires(src -> src.hasPermissionLevel(2))
-                    .then(CommandManager.argument("player", StringArgumentType.word())
+                    .then(CommandManager.argument("player", StringArgumentType.string()) // Changed from word() to string()
                         .then(CommandManager.argument("title", StringArgumentType.string())
                             .then(CommandManager.argument("content", StringArgumentType.string())
                                 .then(CommandManager.argument("item", BoolArgumentType.bool())
@@ -82,14 +82,21 @@ public class MailCommands {
                 )
                 // 日誌
                 .then(CommandManager.literal("log")
+                    .requires(src -> src.hasPermissionLevel(2)) // Admin only
+                    .then(CommandManager.literal("all")
+                        .executes(ctx -> MailManager.mailLog(ctx.getSource(), null, 0, 1)) // targetPlayerName=null for all
+                        .then(CommandManager.argument("page", IntegerArgumentType.integer(1))
+                            .executes(ctx -> MailManager.mailLog(ctx.getSource(), null, 0, IntegerArgumentType.getInteger(ctx, "page")))))
+                    .then(CommandManager.literal("player")
+                        .then(CommandManager.argument("playerName", StringArgumentType.word())
+                            .executes(ctx -> MailManager.mailLog(ctx.getSource(), StringArgumentType.getString(ctx, "playerName"), 0, 1))
+                            .then(CommandManager.argument("page", IntegerArgumentType.integer(1))
+                                .executes(ctx -> MailManager.mailLog(ctx.getSource(), StringArgumentType.getString(ctx, "playerName"), 0, IntegerArgumentType.getInteger(ctx, "page")))))))
+                // Admin Pickup
+                .then(CommandManager.literal("adminpickup")
                     .requires(src -> src.hasPermissionLevel(2))
-                    .then(CommandManager.argument("page", IntegerArgumentType.integer(1))
-                        .executes(ctx -> MailManager.log(
-                            ctx.getSource(),
-                            IntegerArgumentType.getInteger(ctx, "page")
-                        ))
-                    )
-                )
+                    .then(CommandManager.argument("mailId", StringArgumentType.string())
+                        .executes(ctx -> MailManager.adminPickup(ctx.getSource(), StringArgumentType.getString(ctx, "mailId")))))
                 // 黑名單
                 .then(CommandManager.literal("blacklist")
                     .executes(ctx -> MailManager.showBlacklist(ctx.getSource()))

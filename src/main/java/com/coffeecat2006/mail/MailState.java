@@ -13,20 +13,25 @@ public class MailState extends PersistentState {
     private final Map<String, List<String>> byRecipient = new HashMap<>();
     private final HashSet<String> blacklist = new HashSet<>();
     private final List<LogEntry> logs = new ArrayList<>();
+    private final Set<UUID> knownPlayersUuids = new HashSet<>();
+    private final Map<UUID, String> knownPlayerNames = new HashMap<>();
+    private final Map<UUID, Long> playerLastLoginTimestamps = new HashMap<>();
 
     public static final Codec<LogEntry> LOG_CODEC = RecordCodecBuilder.create(inst -> inst.group(
         Codec.LONG.fieldOf("timestamp").forGetter(le -> le.timestamp),
-        Codec.STRING.fieldOf("sender").forGetter(le -> le.sender),
-        Codec.STRING.fieldOf("recipient").forGetter(le -> le.recipient),
-        Codec.STRING.fieldOf("mailId").forGetter(le -> le.mailId)
+        Codec.STRING.optionalFieldOf("sender").orElse("").forGetter(le -> le.sender != null ? le.sender : ""),
+        Codec.STRING.optionalFieldOf("recipient").orElse("").forGetter(le -> le.recipient != null ? le.recipient : ""),
+        Codec.STRING.optionalFieldOf("mailId").orElse("").forGetter(le -> le.mailId != null ? le.mailId : ""),
+        Codec.STRING.optionalFieldOf("action").orElse("SEND").forGetter(le -> le.action != null ? le.action : "SEND"),
+        Codec.STRING.optionalFieldOf("details").orElse("").forGetter(le -> le.details != null ? le.details : "")
     ).apply(inst, LogEntry::new));
 
     public static final Codec<Mail> MAIL_CODEC = RecordCodecBuilder.create(inst -> inst.group(
-        Codec.STRING.fieldOf("id").forGetter(m -> m.id),
-        Codec.STRING.fieldOf("sender").forGetter(m -> m.sender),
-        Codec.STRING.fieldOf("recipient").forGetter(m -> m.recipient),
-        Codec.STRING.fieldOf("title").forGetter(m -> m.title),
-        Codec.STRING.fieldOf("content").forGetter(m -> m.content),
+        Codec.STRING.optionalFieldOf("id").orElse("").forGetter(m -> m.id != null ? m.id : ""),
+        Codec.STRING.optionalFieldOf("sender").orElse("").forGetter(m -> m.sender != null ? m.sender : ""),
+        Codec.STRING.optionalFieldOf("recipient").orElse("").forGetter(m -> m.recipient != null ? m.recipient : ""),
+        Codec.STRING.optionalFieldOf("title").orElse("").forGetter(m -> m.title != null ? m.title : ""),
+        Codec.STRING.optionalFieldOf("content").orElse("").forGetter(m -> m.content != null ? m.content : ""),
         Codec.LONG.fieldOf("timestamp").forGetter(m -> m.timestamp),
         Codec.BOOL.fieldOf("hasItem").forGetter(m -> m.hasItem),
         Codec.BOOL.fieldOf("isRead").forGetter(m -> m.isRead),
@@ -48,47 +53,74 @@ public class MailState extends PersistentState {
             )
             .fieldOf("blacklist")
             .forGetter(ms -> ms.blacklist),
-        LOG_CODEC.listOf().optionalFieldOf("logs", Collections.emptyList()).forGetter(ms -> ms.logs)
-    ).apply(inst, MailState::new));
+        LOG_CODEC.listOf().optionalFieldOf("logs", Collections.emptyList()).forGetter(ms -> ms.logs),
+        Codec.list(Codec.STRING.xmap(UUID::fromString, UUID::toString))
+            .xmap(HashSet::new, ArrayList::new) // Convert List<UUID> to Set<UUID> and back
+            .optionalFieldOf("known_players_uuids", new HashSet<>()) // Default to empty set
+            .forGetter(ms -> ms.knownPlayersUuids),
+        Codec.unboundedMap(Codec.STRING.xmap(UUID::fromString, UUID::toString), Codec.STRING)
+            .optionalFieldOf("known_player_names", new HashMap<>()) // Default to empty map
+            .forGetter(ms -> ms.knownPlayerNames),
+        Codec.unboundedMap(Codec.STRING.xmap(UUID::fromString, UUID::toString), Codec.LONG)
+            .optionalFieldOf("player_last_login_timestamps", new HashMap<>()) // Default to empty map
+            .forGetter(ms -> ms.playerLastLoginTimestamps)
+    ).apply(inst, (mails, byRec, bl, logs, knownUuids, knownNames, lastLogins) -> new MailState(mails, byRec, bl, logs, knownUuids, knownNames, lastLogins)));
 
     public static final PersistentStateType<MailState> TYPE = new PersistentStateType<>(
         "mailmod_data",
-        MailState::new,
-        STATE_CODEC,
+        MailState::new, // No-arg constructor for initial creation
+        STATE_CODEC,    // Codec for loading/saving
         DataFixTypes.SAVED_DATA_COMMAND_STORAGE
     );
 
-    public MailState() { super(); }
-    private MailState(Map<String,Mail> mailsData, Map<String,List<String>> byRecipientData, HashSet<String> blacklistData, List<LogEntry> logsData) {
+    public MailState() { super(); } // Used by PersistentStateType for initial creation
+
+    // Constructor for deserialization by STATE_CODEC
+    private MailState(Map<String,Mail> mailsData,
+                      Map<String,List<String>> byRecipientData,
+                      HashSet<String> blacklistData,
+                      List<LogEntry> logsData,
+                      Set<UUID> knownPlayersUuidsData,
+                      Map<UUID, String> knownPlayerNamesData,
+                      Map<UUID, Long> playerLastLoginTimestampsData) {
         super();
-        // For mails (Map<String, Mail>), the values (Mail objects) are mutable, map structure itself is handled by putAll.
         this.mails.putAll(mailsData);
-
-        // For byRecipient (Map<String, List<String>>), ensure inner lists are mutable.
-        this.byRecipient.clear(); // Clear default map
         byRecipientData.forEach((key, value) -> this.byRecipient.put(key, new ArrayList<>(value)));
-
-        // For blacklist (HashSet<String>), its codec uses xmap(HashSet::new, ArrayList::new), so blacklistData should be a HashSet.
-        // The final field is initialized as new HashSet<>().
-        this.blacklist.clear();
         this.blacklist.addAll(blacklistData);
-
-        // For logs (List<LogEntry>), the final field is initialized as new ArrayList<>().
-        this.logs.clear();
         this.logs.addAll(logsData);
+
+        if (knownPlayersUuidsData != null) {
+            this.knownPlayersUuids.addAll(knownPlayersUuidsData);
+        }
+        if (knownPlayerNamesData != null) {
+            this.knownPlayerNames.putAll(knownPlayerNamesData);
+        }
+        if (playerLastLoginTimestampsData != null) {
+            this.playerLastLoginTimestamps.putAll(playerLastLoginTimestampsData);
+        }
     }
 
     public Map<String, Mail> getMails() { return mails; }
     public Map<String, List<String>> getByRecipient() { return byRecipient; }
     public HashSet<String> getBlacklist() { return blacklist; }
     public List<LogEntry> getLogs() { return logs; }
+    public Set<UUID> getKnownPlayersUuids() { return knownPlayersUuids; }
+    public Map<UUID, String> getKnownPlayerNames() { return knownPlayerNames; }
+    public Map<UUID, Long> getPlayerLastLoginTimestamps() { return playerLastLoginTimestamps; }
 
     public static class Mail {
         public String id, sender, recipient, title, content;
         public long timestamp;
         public boolean hasItem, isRead, isPickedUp;
         public ItemStack packageItem;
-        public Mail() {}
+        public Mail() {
+            this.id = "";
+            this.sender = "";
+            this.recipient = "";
+            this.title = "";
+            this.content = "";
+            this.packageItem = ItemStack.EMPTY;
+        }
         public Mail(String id, String sender, String recipient, String title, String content, long timestamp,
                     boolean hasItem, boolean isRead, boolean isPickedUp) {
             this.id=id; this.sender=sender; this.recipient=recipient; this.title=title;
@@ -100,9 +132,23 @@ public class MailState extends PersistentState {
     public static class LogEntry {
         public long timestamp;
         public String sender, recipient, mailId;
-        public LogEntry() {}
-        public LogEntry(long timestamp, String sender, String recipient, String mailId) {
-            this.timestamp=timestamp; this.sender=sender; this.recipient=recipient; this.mailId=mailId;
+        public String action;
+        public String details;
+
+        public LogEntry() {
+            this.sender = "";
+            this.recipient = "";
+            this.mailId = "";
+            this.action = "";
+            this.details = "";
+        }
+        public LogEntry(long timestamp, String sender, String recipient, String mailId, String action, String details) {
+            this.timestamp = timestamp;
+            this.sender = sender;
+            this.recipient = recipient;
+            this.mailId = mailId;
+            this.action = action;
+            this.details = details;
         }
     }
 }
