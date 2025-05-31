@@ -140,9 +140,10 @@ public class MailManager {
                         m.packageItem = off.copy();
                         p.setStackInHand(Hand.OFF_HAND, ItemStack.EMPTY);
                     }
-                } else {
+                } else { // src.hasPermissionLevel(2) or more
                     if (off != null && off.getItem() != Items.AIR) {
                         m.packageItem = off.copy();
+                        p.setStackInHand(Hand.OFF_HAND, ItemStack.EMPTY); // << ADD THIS LINE
                     }
                 }
             } catch (Exception e) {
@@ -155,17 +156,18 @@ public class MailManager {
             .computeIfAbsent(recipient, k -> new ArrayList<>())
             .add(0, id);
         state.markDirty();
-        // 線上通知
+        // Online notification for recipient
         MinecraftServer server = src.getServer();
         ServerPlayerEntity recv = server.getPlayerManager().getPlayer(recipient);
+        UUID recipientUuid = null; // Store UUID for later comparison
         MutableText notice = Text.literal(src.getName() + " 寄給你一封信: " + title)
             .formatted(Formatting.GREEN)
             .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail open 1")))
             .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看信件內容"))));
 
         if (recv != null) {
+            recipientUuid = recv.getUuid(); // Get UUID if recipient is online
             recv.sendMessage(notice, false);
-            // 物品通知
             if (withItem) {
                 MutableText itemNotice = Text.literal("信件中包含物品，請查看信件").formatted(Formatting.YELLOW);
                 itemNotice = itemNotice.styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看信件內容"))));
@@ -173,13 +175,23 @@ public class MailManager {
             }
         }
 
-        // 廣播給所有在線玩家
+        // Broadcast to other online players
         for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            if (!player.getUuid().equals(recv != null ? recv.getUuid() : null)) {
+            // Only send if player is not the recipient (check by UUID)
+            if (recipientUuid == null || !player.getUuid().equals(recipientUuid)) {
                 player.sendMessage(Text.literal(src.getName() + " 寄給 " + recipient + " 一封信: " + title)
                     .formatted(Formatting.GREEN), false);
             }
         }
+
+        // Add log entry
+        MailState.LogEntry logEntry = new MailState.LogEntry(
+            m.timestamp,
+            m.sender,
+            m.recipient,
+            m.id
+        );
+        state.getLogs().add(logEntry); // Add to the logs list
 
         // 回傳給寄件者的反饋
         src.sendFeedback(() -> Text.literal("已寄送信件 " + id + " 給 " + recipient), false);
@@ -274,42 +286,91 @@ public class MailManager {
 
     // 刪除信件
     public static int delete(ServerCommandSource src, String target, boolean force) {
-        // target 可以是 id 或 all/read/received
-        if (!force) {
-            src.sendFeedback(() -> Text.literal("確定要刪除 " + target + " 嗎? ")
-                .append(Text.literal("[確認]").formatted(Formatting.GREEN)
-                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail delete \"" + target + "\" confirm"))))
-                .append(Text.literal(" "))
-                .append(Text.literal("[取消]").formatted(Formatting.RED)
-                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail delete \"" + target + "\" cancel")))),
-                false
-                );
-            return 1;
-        }
-        
-        // 如果是取消刪除
-        if (target.endsWith(" cancel")) {
+        // Handle explicit cancel command
+        if (target.endsWith(" cancel_true")) {
             src.sendFeedback(() -> Text.literal("已取消刪除"), false);
             return 1;
         }
-        // 執行刪除
+
+        // If force is false, it means it's the initial command, so show confirmation.
+        // The original "target" (e.g., mail ID) is passed here.
+        if (!force) {
+            src.sendFeedback(() -> Text.literal("確定要刪除 " + target + " 嗎? ")
+                .append(Text.literal("[確認]").formatted(Formatting.GREEN)
+                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail delete \"" + target + "\" confirm")))) // confirm will call with force=true
+                .append(Text.literal(" "))
+                .append(Text.literal("[取消]").formatted(Formatting.RED)
+                    // Point to the new cancel mechanism
+                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail delete \"" + target + "\" cancel")))),
+                false
+            );
+            return 1;
+        }
+
+        // If force is true, it's either a confirmation or a direct admin command (though admin usually wouldn't type 'confirm')
+        // The 'target' for a confirmation click will be the original mail ID, "all", etc.
+        // The 'target' for the cancel click in MailCommands is now "<original_target> cancel_true"
+
+        // Re-evaluate target for the "confirm" flow.
+        // If target was "some_id confirm" from the command, MailCommand.java now sends "some_id" and force=true.
+        // So, 'target' here is the actual thing to delete.
+
         List<String> toRemove = new ArrayList<>();
-        if (target.equals("all")) toRemove.addAll(state.getMails().keySet());
-        else if (target.equals("read")) state.getMails().values().stream()
-            .filter(m -> m.isRead)
-            .forEach(m -> toRemove.add(m.id));
-        else if (target.equals("received")) state.getMails().values().stream()
-            .filter(m -> m.isPickedUp)
-            .forEach(m -> toRemove.add(m.id));
-        else toRemove.add(target);
+        String playerUuid = src.getPlayer() != null ? src.getPlayer().getUuidAsString() : null; // For permission checks if needed
+
+        if (target.equals("all")) {
+            // Only remove mails belonging to the player unless they are op.
+            // This part needs careful consideration of who can delete what.
+            // For now, assume "all" means all of the current player's mail.
+            // If admin should delete all server mail, that needs a different command or check.
+            if (playerUuid != null) {
+                List<String> playerMailIds = state.getByRecipient().get(src.getName());
+                if (playerMailIds != null) {
+                    toRemove.addAll(new ArrayList<>(playerMailIds)); // Iterate over a copy
+                }
+            } else if (src.hasPermissionLevel(4)) { // Server console or OP level 4 can delete all
+                toRemove.addAll(new ArrayList<>(state.getMails().keySet()));
+            } else {
+                src.sendFeedback(() -> Text.literal("無權刪除所有郵件"), false);
+                return 0;
+            }
+        } else if (target.equals("read")) {
+            state.getMails().values().stream()
+                .filter(m -> m.recipient.equals(src.getName()) && m.isRead)
+                .forEach(m -> toRemove.add(m.id));
+        } else if (target.equals("received")) {
+            state.getMails().values().stream()
+                .filter(m -> m.recipient.equals(src.getName()) && m.isPickedUp)
+                .forEach(m -> toRemove.add(m.id));
+        } else { // Specific mail ID
+            MailState.Mail m = state.getMails().get(target);
+            if (m != null && (m.recipient.equals(src.getName()) || src.hasPermissionLevel(2))) {
+                toRemove.add(target);
+            } else {
+                src.sendFeedback(() -> Text.literal("找不到信件或無權刪除: " + target), false);
+                return 0;
+            }
+        }
+
+        if (toRemove.isEmpty()) {
+            src.sendFeedback(() -> Text.literal("沒有符合條件的信件可刪除"), false);
+            return 0;
+        }
+
         for (String id : toRemove) {
             MailState.Mail m = state.getMails().remove(id);
             if (m != null) {
-                state.getByRecipient().getOrDefault(m.recipient, Collections.emptyList()).remove(id);
+                List<String> recipientList = state.getByRecipient().get(m.recipient);
+                if (recipientList != null) {
+                    recipientList.remove(id);
+                    if (recipientList.isEmpty()) {
+                        state.getByRecipient().remove(m.recipient);
+                    }
+                }
             }
         }
         state.markDirty();
-        src.sendFeedback(() -> Text.literal("已刪除: " + target), false);
+        src.sendFeedback(() -> Text.literal("已刪除 " + toRemove.size() + " 封信件."), false);
         return 1;
     }
 

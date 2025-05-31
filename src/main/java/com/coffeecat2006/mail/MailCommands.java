@@ -57,25 +57,23 @@ public class MailCommands {
                 // 刪除信件，含 confirm/cancel
                 .then(CommandManager.literal("delete")
                     .then(CommandManager.argument("target", StringArgumentType.string())
-                        .executes(ctx -> MailManager.delete(
+                        .executes(ctx -> MailManager.delete( // Initial call, shows confirmation
                             ctx.getSource(),
                             StringArgumentType.getString(ctx, "target"),
                             false
                         ))
-                        .then(CommandManager.literal("confirm")
+                        .then(CommandManager.literal("confirm") // Confirms deletion of "target"
                             .executes(ctx -> MailManager.delete(
                                 ctx.getSource(),
-                                StringArgumentType.getString(ctx, "target"),
+                                StringArgumentType.getString(ctx, "target"), // Uses "target" from parent
                                 true
-                            ))
-                        )
-                        .then(CommandManager.literal("cancel")
+                            )))
+                        .then(CommandManager.literal("cancel") // Cancels deletion of "target"
                             .executes(ctx -> MailManager.delete(
                                 ctx.getSource(),
-                                StringArgumentType.getString(ctx, "target"),
-                                false
-                            ))
-                        )
+                                StringArgumentType.getString(ctx, "target") + " cancel_true", // Uses "target" from parent and appends marker
+                                true // Process immediately
+                            )))
                     )
                 )
                 // 幫助
