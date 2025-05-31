@@ -540,14 +540,14 @@ public class MailManager {
 
         src.sendFeedback(() -> Text.literal("=== 郵件日誌 (" + currentPage + "/" + currentTotalPages + ") ==="), false);
 
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yy-MM-dd HH:mm");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         int fromIndex = (page - 1) * pageSize;
         int toIndex = Math.min(fromIndex + pageSize, totalLogsCount);
 
         for (int i = fromIndex; i < toIndex; i++) {
             MailState.LogEntry le = logEntries.get(i);
             String time = LocalDateTime.ofEpochSecond(le.timestamp, 0, ZoneOffset.UTC).format(fmt);
-            MutableText line = Text.literal("[" + time + "] ").formatted(Formatting.GRAY);
+            MutableText line = Text.literal("[" + time + "] ").formatted(Formatting.AQUA);
 
             MailState.Mail mail = state.getMails().get(le.mailId); // For status and buttons
 
@@ -624,21 +624,21 @@ public class MailManager {
             final int finalPage = currentPage; // Use the clamped and final currentPage
 
             if (finalPage > 1) {
-                nav.append(Text.literal("<< 上一頁")
+                nav.append(Text.literal("« 上一頁")
                     .formatted(Formatting.YELLOW)
                     .styled(s -> s.withClickEvent(new ClickEvent.RunCommand(finalBaseCommand + " " + (finalPage - 1)))
                                   .withHoverEvent(new HoverEvent.ShowText(Text.literal("前往上一頁")))));
             } else {
-                nav.append(Text.literal("<< 上一頁").formatted(Formatting.DARK_GRAY));
+                nav.append(Text.literal("« 上一頁").formatted(Formatting.DARK_GRAY));
             }
-            nav.append(Text.literal("  ")); // Spacer
+            nav.append(Text.literal(" | ")); // Spacer
             if (finalPage < currentTotalPages) {
-                nav.append(Text.literal("下一頁 >>")
+                nav.append(Text.literal("下一頁 »")
                     .formatted(Formatting.YELLOW)
                     .styled(s -> s.withClickEvent(new ClickEvent.RunCommand(finalBaseCommand + " " + (finalPage + 1)))
                                   .withHoverEvent(new HoverEvent.ShowText(Text.literal("前往下一頁")))));
             } else {
-                nav.append(Text.literal("下一頁 >>").formatted(Formatting.DARK_GRAY));
+                nav.append(Text.literal("下一頁 »").formatted(Formatting.DARK_GRAY));
             }
             src.sendFeedback(() -> nav, false);
         }

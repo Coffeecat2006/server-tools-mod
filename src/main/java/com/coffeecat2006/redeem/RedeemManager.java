@@ -577,7 +577,7 @@ public class RedeemManager {
             ? baseCommand + " " + recentPart + " " + (page - 1)
             : baseCommand + " " + recentPart + " " + page; // Current page, typically not clickable but ensure format consistency
 
-        MutableText prev = Text.literal("« Prev");
+        MutableText prev = Text.literal("« 上一頁");
         if (page <= 1) {
             prev.formatted(Formatting.DARK_GRAY);
         } else {
@@ -589,7 +589,7 @@ public class RedeemManager {
 
         String nextCmd = baseCommand + " " + recentPart + " " + (page + 1);
 
-        MutableText next = Text.literal("Next »");
+        MutableText next = Text.literal("下一頁 »");
         if (entries.size() < perPage) {
             next.formatted(Formatting.DARK_GRAY);
         } else {

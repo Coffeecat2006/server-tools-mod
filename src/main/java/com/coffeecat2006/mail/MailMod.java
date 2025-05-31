@@ -56,8 +56,8 @@ public class MailMod implements ModInitializer {
                 .count();
 
             if (newMailCount > 0) {
-                MutableText message = Text.literal("您不在时收到了 " + newMailCount + " 封新信件 ")
-                    .append(Text.literal("[点我查看]")
+                MutableText message = Text.literal("您不在時收到了 " + newMailCount + " 封新信件 ")
+                    .append(Text.literal("[點我查看]")
                         .formatted(Formatting.GOLD, Formatting.UNDERLINE)
                         .styled(style -> style.withClickEvent(new ClickEvent.RunCommand("/mail open")))); // Corrected line
                 player.sendMessage(message, false);

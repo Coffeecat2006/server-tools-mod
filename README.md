@@ -1,12 +1,13 @@
-# RedeemMod
+# server tools mod  
 
-**Version:** 1.0.2  
+**Version:** 1.0.3  
 **Minecraft:** 1.21.5  
 **Fabric Loader:** 1.21.5  
 **Fabric API:** 0.88.0+  
 **Java:** 17+
 
 一款 Fabric 模組，讓伺服器管理員能輕鬆定義「禮包碼」，玩家輸入後可領取自訂物品、文字，並觸發伺服器指令事件。所有資料檔自動持久化到世界存檔。
+還可以寄送郵件。
 
 ---
 
