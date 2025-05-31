@@ -59,7 +59,7 @@ public class MailMod implements ModInitializer {
                 MutableText message = Text.literal("您不在时收到了 " + newMailCount + " 封新信件 ")
                     .append(Text.literal("[点我查看]")
                         .formatted(Formatting.GOLD, Formatting.UNDERLINE)
-                        .styled(style -> style.withClickEvent(ClickEvent.runCommand("/mail open")))); // Corrected line
+                        .styled(style -> style.withClickEvent(new ClickEvent.RunCommand("/mail open")))); // Corrected line
                 player.sendMessage(message, false);
             }
 
