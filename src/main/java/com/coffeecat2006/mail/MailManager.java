@@ -162,7 +162,8 @@ public class MailManager {
                 sendSingleMail(src.getServer(), targetPlayer.getName().getString(), senderDisplayName, title, content, actualWithItem, itemToSend);
                 count++;
             }
-            src.sendFeedback(() -> Text.literal("已發送信件給 " + count + " 位線上玩家"), false);
+            final int finalCountA = count;
+            src.sendFeedback(() -> Text.literal("已發送信件給 " + finalCountA + " 位線上玩家"), false);
             state.getLogs().add(new MailState.LogEntry(Instant.now().getEpochSecond(), src.getName(), "@a", "MASS_SEND_A", "SEND", title));
             state.markDirty();
             return count;
@@ -177,7 +178,8 @@ public class MailManager {
                 sendSingleMail(src.getServer(), targetName, senderDisplayName, title, content, actualWithItem, itemToSend);
                 count++;
             }
-            src.sendFeedback(() -> Text.literal("已發送信件給 " + count + " 位已知玩家"), false);
+            final int finalCountAll = count;
+            src.sendFeedback(() -> Text.literal("已發送信件給 " + finalCountAll + " 位已知玩家"), false);
             state.getLogs().add(new MailState.LogEntry(Instant.now().getEpochSecond(), src.getName(), "@all", "MASS_SEND_ALL", "SEND", title));
             state.markDirty();
             return count;
@@ -531,11 +533,12 @@ public class MailManager {
     }
 
     private static int showMailLogList(ServerCommandSource src, List<MailState.LogEntry> logEntries, String baseCommandWithoutPage, int totalLogsCount, int page, int pageSize, String contextPlayerName) {
-        int totalPages = (totalLogsCount + pageSize - 1) / pageSize;
-        if (totalPages == 0) totalPages = 1; // Ensure at least one page even if no logs
-        page = Math.min(Math.max(page, 1), totalPages); // Clamp page number
+        int totalPagesCalculated = (totalLogsCount + pageSize - 1) / pageSize;
+        if (totalPagesCalculated == 0) totalPagesCalculated = 1; // Ensure at least one page even if no logs
+        final int currentPage = Math.min(Math.max(page, 1), totalPagesCalculated); // Clamp page number
+        final int currentTotalPages = totalPagesCalculated;
 
-        src.sendFeedback(() -> Text.literal("=== 郵件日誌 (" + page + "/" + totalPages + ") ==="), false);
+        src.sendFeedback(() -> Text.literal("=== 郵件日誌 (" + currentPage + "/" + currentTotalPages + ") ==="), false);
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yy-MM-dd HH:mm");
         int fromIndex = (page - 1) * pageSize;
@@ -589,18 +592,19 @@ public class MailManager {
 
             // Interaction Buttons
             if (mail != null) {
+                final String mailIdForLambda = le.mailId; // Capture for lambda
                 line.append(Text.literal(" [查看]")
                     .formatted(Formatting.BLUE, Formatting.UNDERLINE)
-                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail read \"" + le.mailId + "\""))
+                    .styled(s -> s.withClickEvent(ClickEvent.runCommand("/mail read \"" + mailIdForLambda + "\""))
                                   .withHoverEvent(new HoverEvent.ShowText(Text.literal("讀取信件內容")))));
 
                 if (le.action.equals("SEND") && mail.hasItem && !mail.isPickedUp && src.hasPermissionLevel(2)) {
                      line.append(Text.literal(" [代領]")
                         .formatted(Formatting.GOLD, Formatting.UNDERLINE)
-                        .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail adminpickup \"" + le.mailId + "\""))
+                        .styled(s -> s.withClickEvent(ClickEvent.runCommand("/mail adminpickup \"" + mailIdForLambda + "\""))
                                       .withHoverEvent(new HoverEvent.ShowText(Text.literal("管理員代領此信件物品")))));
                 }
-                String mailStatus = (mail.isRead ? "已讀" : "未讀") + ", " + (mail.isPickedUp ? "已領取" : "未領取");
+                final String mailStatus = (mail.isRead ? "已讀" : "未讀") + ", " + (mail.isPickedUp ? "已領取" : "未領取");
                 line.append(Text.literal(" [狀態]")
                     .formatted(Formatting.DARK_GRAY)
                     .styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal(mailStatus)))));
@@ -616,19 +620,22 @@ public class MailManager {
         // Pagination controls
         if (totalPages > 1) {
             MutableText nav = Text.empty();
-            if (page > 1) {
+            final String finalBaseCommand = baseCommandWithoutPage;
+            final int finalPage = currentPage; // Use the clamped and final currentPage
+
+            if (finalPage > 1) {
                 nav.append(Text.literal("<< 上一頁")
                     .formatted(Formatting.YELLOW)
-                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand(baseCommandWithoutPage + " " + (page - 1)))
+                    .styled(s -> s.withClickEvent(ClickEvent.runCommand(finalBaseCommand + " " + (finalPage - 1)))
                                   .withHoverEvent(new HoverEvent.ShowText(Text.literal("前往上一頁")))));
             } else {
                 nav.append(Text.literal("<< 上一頁").formatted(Formatting.DARK_GRAY));
             }
             nav.append(Text.literal("  ")); // Spacer
-            if (page < totalPages) {
+            if (finalPage < currentTotalPages) {
                 nav.append(Text.literal("下一頁 >>")
                     .formatted(Formatting.YELLOW)
-                    .styled(s -> s.withClickEvent(new ClickEvent.RunCommand(baseCommandWithoutPage + " " + (page + 1)))
+                    .styled(s -> s.withClickEvent(ClickEvent.runCommand(finalBaseCommand + " " + (finalPage + 1)))
                                   .withHoverEvent(new HoverEvent.ShowText(Text.literal("前往下一頁")))));
             } else {
                 nav.append(Text.literal("下一頁 >>").formatted(Formatting.DARK_GRAY));
@@ -639,9 +646,7 @@ public class MailManager {
     }
 
     public static int mailLog(ServerCommandSource src, String targetPlayerName, int recent, int page) {
-        // 'recent' is not used in this implementation for now, similar to RedeemManager.
-        // It's kept for potential future use or signature consistency.
-        // To show newest first, we reverse a copy of the logs.
+        // 'recent' is not used in this implementation for now.
         List<MailState.LogEntry> allLogs = new ArrayList<>(state.getLogs());
         Collections.reverse(allLogs); // Newest first
 
