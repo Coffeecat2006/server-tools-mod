@@ -503,7 +503,7 @@ public class MailManager {
             // or for it to be admin-picked multiple times if needed for some reason.
             // The log indicates an admin action.
 
-            src.sendFeedback(() -> Text.literal("已為 " + m.recipient + " 管理代領信件 " + mailId + " 的物品."), false);
+            src.sendFeedback(() -> Text.literal("已為 " + m.recipient + " 管理領取信件 " + mailId + " 的物品."), false);
             state.getLogs().add(new MailState.LogEntry(
                 Instant.now().getEpochSecond(),
                 src.getName(), // Admin's name
@@ -601,10 +601,10 @@ public class MailManager {
                                   .withHoverEvent(new HoverEvent.ShowText(Text.literal("讀取信件內容")))));
 
                 if (le.action.equals("SEND") && mail.hasItem && !mail.isPickedUp && src.hasPermissionLevel(2)) {
-                     line.append(Text.literal(" [代領]")
+                     line.append(Text.literal(" [查看包裹]")
                         .formatted(Formatting.GOLD, Formatting.UNDERLINE)
                         .styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail adminpickup \"" + mailIdForLambda + "\""))
-                                      .withHoverEvent(new HoverEvent.ShowText(Text.literal("管理員代領此信件物品")))));
+                                      .withHoverEvent(new HoverEvent.ShowText(Text.literal("管理員領取此信件物品(不影響收件者領取)")))));
                 }
                 final String mailStatus = (mail.isRead ? "已讀" : "未讀") + ", " + (mail.isPickedUp ? "已領取" : "未領取");
                 line.append(Text.literal(" [狀態]")
