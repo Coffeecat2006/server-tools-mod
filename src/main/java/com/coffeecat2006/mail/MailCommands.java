@@ -23,7 +23,7 @@ public class MailCommands {
                 )
                 // 寄送信件
                 .then(CommandManager.literal("send")
-                    .requires(src -> src.hasPermissionLevel(2))
+                    //.requires(src -> src.hasPermissionLevel(2))
                     .then(CommandManager.argument("player", StringArgumentType.string()) // Changed from word() to string()
                         .then(CommandManager.argument("title", StringArgumentType.string())
                             .then(CommandManager.argument("content", StringArgumentType.string())
