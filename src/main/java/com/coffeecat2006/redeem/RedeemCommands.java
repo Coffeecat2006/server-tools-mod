@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import net.minecraft.command.argument.EntityArgumentType;
 
 public class RedeemCommands {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {

@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.command.argument.EntityArgumentType;
 
 public class MailCommands {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
