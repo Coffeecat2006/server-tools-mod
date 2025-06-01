@@ -232,7 +232,7 @@ public class RedeemCommands {
                         )
                 )
                 .then(CommandManager.literal("player")
-                        .then(CommandManager.argument("player", StringArgumentType.word())
+                        .then(CommandManager.argument("player", EntityArgumentType.player())
                         .executes(ctx -> RedeemManager.logPlayer(
                                 ctx.getSource(),
                                 StringArgumentType.getString(ctx, "player"),

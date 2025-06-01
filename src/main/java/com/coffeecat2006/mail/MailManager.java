@@ -246,18 +246,26 @@ public class MailManager {
             }
         }
 
-        // Broadcast to other online players (if originalSourceForFeedback is not null, implies it's a single send by a player)
-        // For mass sends (@a, @all), this broadcast is skipped to avoid spam. The overall "Sent to X players" is feedback.
+        // 只在 originalSourceForFeedback 非空（單一玩家寄信）時，才廣播給管理員
         if (originalSourceForFeedback != null) {
             for (ServerPlayerEntity player : mcServer.getPlayerManager().getPlayerList()) {
-                if (recv == null || !player.getUuid().equals(recv.getUuid())) { // Don't send to recipient again
-                     if (!player.getName().getString().equals(displayedSenderName)){ // Don't send to sender
-                        player.sendMessage(Text.literal(displayedSenderName + " 寄給 " + recipientName + " 一封信: " + title)
-                            .formatted(Formatting.GREEN), false);
-                     }
+                // 只對 OP（管理員）發送
+                if (mcServer.getPlayerManager().isOperator(player.getGameProfile())) {
+                    // 不重複寄給收件者，也不寄給自己
+                    if ((recv == null || !player.getUuid().equals(recv.getUuid()))
+                        && !player.getName().getString().equals(displayedSenderName)) {
+                        player.sendMessage(
+                            Text.literal(displayedSenderName + " 寄給 " + recipientName + " 一封信: " + title)
+                                .formatted(Formatting.GREEN),
+                            false
+                        );
+                    }
                 }
             }
-            originalSourceForFeedback.sendFeedback(() -> Text.literal("已寄送信件 " + id + " 給 " + recipientName), false);
+            originalSourceForFeedback.sendFeedback(
+                () -> Text.literal("已寄送信件 " + id + " 給 " + recipientName),
+                false
+            );
         }
         return 1;
     }
