@@ -276,7 +276,7 @@ public class MailManager {
         String time = LocalDateTime.ofEpochSecond(m.timestamp, 0, ZoneOffset.UTC).format(fmt);
         src.sendFeedback(() -> Text.literal("[" + time + "]"), false);
         src.sendFeedback(() -> Text.literal(m.id + "  " + m.title), false);
-        for (String line : m.content.split("\\n")) {
+        for (String line : m.content.split("&n")) {
             src.sendFeedback(() -> Text.literal(line), false);
         }
         if (m.hasItem) {
