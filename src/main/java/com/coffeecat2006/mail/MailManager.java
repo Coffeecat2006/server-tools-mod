@@ -240,6 +240,8 @@ public class MailManager {
             if (m.hasItem) {
                 MutableText itemNotice = Text.literal("信件中包含物品，請查看信件").formatted(Formatting.YELLOW);
                 itemNotice = itemNotice.styled(s -> s.withHoverEvent(new HoverEvent.ShowText(Text.literal("點擊查看信件內容"))));
+                itemNotice = itemNotice.styled(s -> s.withClickEvent(new ClickEvent.RunCommand("/mail open 1")));
+                // Send item notice if there's an item
                 recv.sendMessage(itemNotice, false);
             }
         }
