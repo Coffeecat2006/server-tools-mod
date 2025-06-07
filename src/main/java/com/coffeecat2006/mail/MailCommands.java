@@ -31,7 +31,7 @@ public class MailCommands {
                                 .then(CommandManager.argument("item", BoolArgumentType.bool())
                                     .executes(ctx -> MailManager.send(
                                         ctx.getSource(),
-                                        StringArgumentType.getString(ctx, "player"),
+                                        EntityArgumentType.getPlayer(ctx, "player"),
                                         StringArgumentType.getString(ctx, "title"),
                                         StringArgumentType.getString(ctx, "content"),
                                         BoolArgumentType.getBool(ctx, "item")
@@ -90,9 +90,9 @@ public class MailCommands {
                             .executes(ctx -> MailManager.mailLog(ctx.getSource(), null, 0, IntegerArgumentType.getInteger(ctx, "page")))))
                     .then(CommandManager.literal("player")
                         .then(CommandManager.argument("playerId", EntityArgumentType.player())
-                            .executes(ctx -> MailManager.mailLog(ctx.getSource(), StringArgumentType.getString(ctx, "playerName"), 0, 1))
+                            .executes(ctx -> MailManager.mailLog(ctx.getSource(), EntityArgumentType.getPlayer(ctx, "playerName"), 0, 1))
                             .then(CommandManager.argument("page", IntegerArgumentType.integer(1))
-                                .executes(ctx -> MailManager.mailLog(ctx.getSource(), StringArgumentType.getString(ctx, "playerName"), 0, IntegerArgumentType.getInteger(ctx, "page")))))))
+                                .executes(ctx -> MailManager.mailLog(ctx.getSource(), EntityArgumentType.getPlayer(ctx, "playerName"), 0, IntegerArgumentType.getInteger(ctx, "page")))))))
                 // Admin Pickup
                 .then(CommandManager.literal("adminpickup")
                     .requires(src -> src.hasPermissionLevel(2))
@@ -105,7 +105,7 @@ public class MailCommands {
                         .then(CommandManager.argument("player", EntityArgumentType.player())
                             .executes(ctx -> MailManager.blacklistAdd(
                                 ctx.getSource(),
-                                StringArgumentType.getString(ctx, "player"), false
+                                EntityArgumentType.getPlayer(ctx, "player"), false
                             ))
                             .then(CommandManager.literal("confirm")
                                 .executes(ctx -> MailManager.blacklistAdd(
@@ -125,7 +125,7 @@ public class MailCommands {
                         .then(CommandManager.argument("player", EntityArgumentType.player())
                             .executes(ctx -> MailManager.blacklistRemove(
                                 ctx.getSource(),
-                                StringArgumentType.getString(ctx, "player")
+                                EntityArgumentType.getPlayer(ctx, "player")
                             ))
                         )
                     )

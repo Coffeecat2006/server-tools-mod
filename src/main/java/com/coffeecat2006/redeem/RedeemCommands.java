@@ -236,7 +236,7 @@ public class RedeemCommands {
                         .then(CommandManager.argument("player", EntityArgumentType.player())
                         .executes(ctx -> RedeemManager.logPlayer(
                                 ctx.getSource(),
-                                StringArgumentType.getString(ctx, "player"),
+                                SEntityArgumentType.getPlayer(ctx, "player"),
                                 0, 1
                         ))
                         .then(CommandManager.argument("recent", IntegerArgumentType.integer(1))
