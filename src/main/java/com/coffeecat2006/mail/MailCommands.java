@@ -31,7 +31,7 @@ public class MailCommands {
                                 .then(CommandManager.argument("item", BoolArgumentType.bool())
                                     .executes(ctx -> MailManager.send(
                                         ctx.getSource(),
-                                        EntityArgumentType.getPlayer(ctx, "player"),
+                                        EntityArgumentType.getPlayer(ctx, "player").getName().getString(),
                                         StringArgumentType.getString(ctx, "title"),
                                         StringArgumentType.getString(ctx, "content"),
                                         BoolArgumentType.getBool(ctx, "item")
@@ -83,16 +83,20 @@ public class MailCommands {
                 )
                 // 日誌
                 .then(CommandManager.literal("log")
-                    .requires(src -> src.hasPermissionLevel(2)) // Admin only
+                    .requires(src -> src.hasPermissionLevel(2))
                     .then(CommandManager.literal("all")
                         .executes(ctx -> MailManager.mailLog(ctx.getSource(), null, 0, 1)) // targetPlayerName=null for all
                         .then(CommandManager.argument("page", IntegerArgumentType.integer(1))
                             .executes(ctx -> MailManager.mailLog(ctx.getSource(), null, 0, IntegerArgumentType.getInteger(ctx, "page")))))
                     .then(CommandManager.literal("player")
                         .then(CommandManager.argument("playerId", EntityArgumentType.player())
-                            .executes(ctx -> MailManager.mailLog(ctx.getSource(), EntityArgumentType.getPlayer(ctx, "playerName"), 0, 1))
+                            .executes(ctx -> MailManager.mailLog(ctx.getSource(), 
+                                EntityArgumentType.getPlayer(ctx, "playerId").getName().getString(), 0, 1))
                             .then(CommandManager.argument("page", IntegerArgumentType.integer(1))
-                                .executes(ctx -> MailManager.mailLog(ctx.getSource(), EntityArgumentType.getPlayer(ctx, "playerName"), 0, IntegerArgumentType.getInteger(ctx, "page")))))))
+                                .executes(ctx -> MailManager.mailLog(ctx.getSource(), 
+                                    EntityArgumentType.getPlayer(ctx, "playerId").getName().getString(), 
+                                    0, 
+                                    IntegerArgumentType.getInteger(ctx, "page")))))))
                 // Admin Pickup
                 .then(CommandManager.literal("adminpickup")
                     .requires(src -> src.hasPermissionLevel(2))
@@ -105,7 +109,8 @@ public class MailCommands {
                         .then(CommandManager.argument("player", EntityArgumentType.player())
                             .executes(ctx -> MailManager.blacklistAdd(
                                 ctx.getSource(),
-                                EntityArgumentType.getPlayer(ctx, "player"), false
+                                EntityArgumentType.getPlayer(ctx, "player").getName().getString(), 
+                                false
                             ))
                             .then(CommandManager.literal("confirm")
                                 .executes(ctx -> MailManager.blacklistAdd(
@@ -125,7 +130,7 @@ public class MailCommands {
                         .then(CommandManager.argument("player", EntityArgumentType.player())
                             .executes(ctx -> MailManager.blacklistRemove(
                                 ctx.getSource(),
-                                EntityArgumentType.getPlayer(ctx, "player")
+                                EntityArgumentType.getPlayer(ctx, "player").getName().getString()
                             ))
                         )
                     )
