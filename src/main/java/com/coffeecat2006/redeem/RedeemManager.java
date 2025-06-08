@@ -102,8 +102,8 @@ public class RedeemManager {
             player.getInventory().offerOrDrop(give);
         }
 
-        MinecraftServer server = src.getServer();
-        CommandSourceStack serverSource = server.createCommandSourceStack().withPermission(4);
+        MinecraftServer server = src.getMinecraftServer();
+        ServerCommandSource serverSource = server.getCommandSource().withLevel(4);
 
         r.events.forEach((ename, cmd) -> {
             String playerName = player.getName().getString();
@@ -114,8 +114,7 @@ public class RedeemManager {
                 cmd.replace("@s", playerName)
             );
             // 由伺服端（最高權限）執行
-            server.getCommandManager()
-                .executeWithPrefix(serverSource, fullCmd);
+            server.getCommandManager().execute(serverSource, fullCmd);
         });
 
         r.redeemedCount++;
