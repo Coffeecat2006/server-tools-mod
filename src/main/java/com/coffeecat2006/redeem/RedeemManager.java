@@ -105,12 +105,11 @@ public class RedeemManager {
         MinecraftServer server = src.getServer();
         ServerCommandSource serverSource = server.getCommandSource().withLevel(4);
 
-        events.forEach((ename, cmd) -> {
+        r.events.forEach((ename, cmd) -> {
             String playerName = player.getName().getString();
             String fullCmd = String.format(
                 "execute as %s at %s run %s",
-                playerName, playerName,
-                cmd.replace("@s", playerName)
+                playerName, playerName, cmd.replace("@s", playerName)
             );
             server.getCommandManager().executeWithPrefix(serverSource, fullCmd);
         });
