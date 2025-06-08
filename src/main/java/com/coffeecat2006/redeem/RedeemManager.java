@@ -101,12 +101,21 @@ public class RedeemManager {
             player.getInventory().offerOrDrop(give);
         }
 
+        MinecraftServer server = src.getServer();
+        CommandSourceStack serverSource = server.createCommandSourceStack().withPermission(4);
+
         r.events.forEach((ename, cmd) -> {
             String playerName = player.getName().getString();
-            src.getServer()
-            .getCommandManager()
-                .executeWithPrefix(src, cmd.replace("@s", playerName));
-         });
+            String fullCmd = String.format(
+                "execute as %s at %s run %s",
+                playerName,
+                playerName,
+                cmd.replace("@s", playerName)
+            );
+            // 由伺服端（最高權限）執行
+            server.getCommandManager()
+                .executeWithPrefix(serverSource, fullCmd);
+        });
 
         r.redeemedCount++;
         r.usedPlayers.add(player.getUuid());
