@@ -4,7 +4,7 @@ plugins {
 }
 
 version = '1.0.3'
-group   = 'com.coffeecat2006.redeem'
+group   = 'com.coffeecat2006.server_tools_mod'
 
 repositories {
     maven { url 'https://maven.fabricmc.net/' }
@@ -34,7 +34,7 @@ loom {
     runs {
         server {
             server()
-            name = 'RedeemCode Server'
+            name = 'server_tools_mod Server'
         }
     }
 }
