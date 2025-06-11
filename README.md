@@ -55,7 +55,7 @@
 
 ## 安裝
 
-1. 把 `RedeemMod-1.0.3.jar` 放到 `mods/` 資料夾（需同時放 Fabric API）  
+1. 把 `server_tools_mod-1.0.3.jar` 放到 `mods/` 資料夾（需同時放 Fabric API）  
 2. 啟動伺服器或客戶端  
 
 ---
