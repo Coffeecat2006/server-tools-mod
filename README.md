@@ -1,4 +1,4 @@
-# server tools mod  
+# server tools mod  ![Mod Icon](src/main/resources/assets/server_tools_mod/icon.png)
 
 **Version:** 1.0.3  
 **Minecraft:** 1.21.5  
