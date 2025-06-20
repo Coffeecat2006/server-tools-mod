@@ -19,7 +19,7 @@ public class InvisibleCommands {
                     ServerPlayerEntity player = context.getSource().getPlayer();
                     InvisibleManager.setInvisible(player, active);
                     context.getSource().sendFeedback(
-                        Text.literal("隱形狀態已設為: " + active),
+                        () -> Text.literal("隱形狀態已設為: " + active),
                         false
                     );
                     return 1;

@@ -31,7 +31,7 @@ public class InvisibleManager {
                 // 對所有線上玩家廣播：從 TAB 列表移除
                 for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
                     p.networkHandler.sendPacket(
-                        new PlayerListS2CPacket(Action.REMOVE_PLAYER, player)
+                        new PlayerListS2CPacket(Action.UPDATE_LISTED, player)
                     );
                 }
             }
