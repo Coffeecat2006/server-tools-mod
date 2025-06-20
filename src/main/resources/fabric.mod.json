@@ -10,7 +10,9 @@
 	"environment": "*",
 	"entrypoints": {
 	  "main": ["com.coffeecat2006.mail.MailMod",
-	  "com.coffeecat2006.redeem.RedeemMod",
+	  "com.coffeecat2006.redeem.RedeemMod"
+	  ],
+	  "server": [
 	  "com.coffeecat2006.invisible.InvisibleMod"
 	  ]
 	},
