@@ -9,7 +9,7 @@
 	"license": "MIT",
 	"environment": "*",
 	"entrypoints": {
-	  "main": ["com.coffeecat2006.mail.MailMod","com.coffeecat2006.redeem.RedeemMod"]
+	  "main": ["com.coffeecat2006.mail.MailMod","com.coffeecat2006.redeem.RedeemMod","com.coffeecat2006.invisible.InvisibleMod"]
 	},
 	"depends": {
 	  "fabricloader": ">=0.14.0",
