@@ -22,11 +22,10 @@ public class InvisibleManager {
     public static void setInvisible(ServerPlayerEntity player, boolean invisible) {
         UUID uuid = player.getUuid();
         MinecraftServer server = player.getServer();
-        if (server == null) return; // 保險檢查
+        if (server == null) return;
 
         if (invisible) {
             if (invisiblePlayers.add(uuid)) {
-                // 設置實體隱形 flag（會讓所有 client 收到 metadata 並不渲染）
                 player.setInvisible(true);
 
                 // 對所有線上玩家廣播：從 TAB 列表移除
@@ -38,7 +37,6 @@ public class InvisibleManager {
             }
         } else {
             if (invisiblePlayers.remove(uuid)) {
-                // 取消隱形
                 player.setInvisible(false);
 
                 // 對所有線上玩家廣播：重新加入 TAB 列表

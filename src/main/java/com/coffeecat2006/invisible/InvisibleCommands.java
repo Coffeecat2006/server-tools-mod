@@ -2,11 +2,10 @@ package com.coffeecat2006.invisible;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
-
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 
 public class InvisibleCommands {
 
@@ -20,7 +19,7 @@ public class InvisibleCommands {
                     ServerPlayerEntity player = context.getSource().getPlayer();
                     InvisibleManager.setInvisible(player, active);
                     context.getSource().sendFeedback(
-                        new LiteralText("隱形狀態已設為: " + active), 
+                        Text.literal("隱形狀態已設為: " + active),
                         false
                     );
                     return 1;
